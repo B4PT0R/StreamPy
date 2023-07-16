@@ -88,8 +88,8 @@ console.synchronize(globals())
 
 def process(code,queue):
     if not (code=="" or code==None):
-        st.ace(value=code, placeholder="", language='python', auto_update=True, theme='chrome', min_lines=2, readonly=True,key=st.gen_key())
-        console.run(code)
+        with queue:
+            console.run(code)
 
 
 def make_menu():
@@ -200,8 +200,6 @@ def make_input(queue):
 
     sti.refresh()
 
-    if state.run_button:
-        stl.experimental_rerun() #This needs to be removed
 
 def make_console():
     welcome=stl.container()        

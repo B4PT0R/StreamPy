@@ -1,5 +1,6 @@
 import code
 from code import InteractiveConsole
+from streamlit.runtime.scriptrunner import add_script_run_ctx
 from threading import Thread
 from queue import Queue
 import sys
@@ -108,7 +109,9 @@ class StConsole(InteractiveConsole):
         self.inputs.append(source)
         self.results.append([])
         R=Thread(target=self.run_thread,args=(source,))
+        add_script_run_ctx(R)
         L=Thread(target=self.listen_thread)
+        add_script_run_ctx(L)
 
         R.start()
         L.start()
