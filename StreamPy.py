@@ -94,7 +94,7 @@ def process(code,queue):
 
 def make_menu():
    with stl.sidebar:
-        stl.write("Menu")
+        stl.subheader("Menu")
         def on_open_editor_click():
             edit('new_buffer')
         stl.button("Open Editor",on_click=on_open_editor_click)
