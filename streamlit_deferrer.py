@@ -68,7 +68,7 @@ def ctx(context):
 
 def call(callable):
     results=st_map(callable.name)(*callable.args,**callable.kwargs)
-    if not results==None:
+    if not results is None:
         if isiterable(results):
             for i,result in enumerate(results):
                 if i<len(callable.outputs):
@@ -86,8 +86,7 @@ class st_direct_exec_callable:
 
     def __call__(self,*args,**kwargs):
         return st_map(self.name)(*args,**kwargs)
-
-
+    
 
 class st_one_shot_callable:
 
@@ -255,6 +254,8 @@ class st_deferrer:
             obj=st_property(self,attr,context=self.current_context)
             self.append(obj)
             return obj
+        elif attr in ['column_config']:
+            return st.column_config
         else:
             obj=st_callable(self,attr,context=self.current_context)
             self.append(obj)
