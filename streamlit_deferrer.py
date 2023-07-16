@@ -77,30 +77,6 @@ def call(callable):
             callable.outputs[0].value=results
 
 
-class st_direct_exec_callable:
-
-    def __init__(self,deferrer,name,context):
-        self.deferrer=deferrer
-        self.name=name
-        self.context=context
-        self.has_exec=False
-        self.value=None
-
-
-    def __call__(self,*args,**kwargs):
-        self.args=args
-        self.kwargs=kwargs
-        return st_map(self.name)(*self.args,**self.kwargs)
-
-    def __enter__(self):
-        self.context = self.deferrer.current_context
-        self.deferrer.current_context = self
-        return self.value
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.deferrer.current_context = self.context
-
-
 class st_spinner:
 
     def __init__(self,deferrer,name,context):
@@ -271,9 +247,6 @@ class st_deferrer:
         if attr in ['balloons','snow','experimental_rerun']:
             obj=st_one_shot_callable(self,attr,context=self.current_context)
             self.append(obj)
-            return obj
-        elif attr in ['spinner','progress']:
-            obj=st_direct_exec_callable(self,attr,context=self.current_context)
             return obj
         elif attr in ['spinner']:
             obj=st_spinner(self,attr,context=self.current_context)
