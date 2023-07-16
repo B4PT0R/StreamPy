@@ -8,7 +8,4 @@ def plot(f):
     st.pyplot(fig)
 
 
-def edit_startup():
-    edit('startup.py')
-
     
