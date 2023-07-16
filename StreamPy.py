@@ -32,6 +32,8 @@ if 'input_deferrer' not in state:
     state.input_deferrer=st_deferrer(key_manager=km)
 sti=state.input_deferrer
 
+if 'input_key' not in state:
+    state.input_key = km.gen_key()
 
 if 'input_code' not in state:
     state.input_code = st_output(deferrer=sti,context=None)
@@ -62,13 +64,16 @@ def run_editor_content():
     stl.experimental_rerun()
 
 def edit(file):
-    if not os.path.exists(file):
-        with open(file,'w') as f:
-            pass
     state.show_editor=True
     state.open_file=file
-    with open(state.open_file,'r') as f:
-        state.file_content=f.read()
+    if not file=='buffer':
+        if not os.path.exists(file):
+            with open(file,'w') as f:
+                pass
+        with open(state.open_file,'r') as f:
+            state.file_content=f.read()
+    else:
+        state.file_content=''
 
 def restart():
     st.clear()
@@ -96,7 +101,7 @@ def make_menu():
    with stl.sidebar:
         stl.subheader("Menu")
         def on_open_editor_click():
-            edit('new_buffer')
+            edit('buffer')
         stl.button("Open Editor",on_click=on_open_editor_click)
         def on_close_editor_click():
             close_editor()
@@ -179,23 +184,23 @@ def make_input(queue):
         state.input_code.value=console.inputs[n-state.index]
     else:
         state.input_code.value=console.inputs[n-state.index]
-    state.output_code = sti.ace(value=state.input_code.value, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.editor_key)
+    state.output_code = sti.ace(value=state.input_code.value, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
     a,_,b,_,c=sti.columns([1,3,1,3,1],gap='small')
     with a:
         def on_previous_click():
             state.index+=1
-            state.editor_key=sti.gen_key()
+            state.input_key=sti.gen_key()
         sti.button("Prev.", key='previous',on_click=on_previous_click)
     with b:
         def on_run_click():
             state.index=0
             process(state.output_code.value,queue)
-            state.editor_key=sti.gen_key()
+            state.input_key=sti.gen_key()
         sti.button("Run",key='run_button',on_click=on_run_click)
     with c:  
         def on_next_click():
             state.index-=1
-            state.editor_key=sti.gen_key()
+            state.input_key=sti.gen_key()
         sti.button("Next", key='next',on_click=on_next_click)
 
     sti.refresh()
@@ -242,21 +247,27 @@ def make_editor(editor_column):
                     stl.warning("This file doesn't exist!")
         stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
     elif new_butt:
-        def on_file_name_change():
-            if not os.path.exists(state.file_name):
-                edit(state.file_name)
-            else:
-                with editor_column:
-                    stl.warning("This file already exists!")
-        stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+        edit('buffer')
+        state.editor_key=km.gen_key()
+        stl.experimental_rerun()
     else:
         if save_butt:
-            save_as(state.open_file)
+            if not state.open_file=='buffer':
+                save_as(state.open_file)
+                stl.success("File saved.")
+            else:
+                def on_file_name_change():
+                    save_as(state.file_name)
+                    with editor_column:
+                        stl.success("File saved.")
+                stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
         if save_as_butt:
             def on_file_name_change():
                 save_as(state.file_name)
+                with editor_column:
+                        stl.success("File saved.")
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=15, key='editor')
+        state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=15, key=state.editor_key)
         if run_butt:
             run_editor_content()
         
