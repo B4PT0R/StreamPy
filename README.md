@@ -37,7 +37,8 @@ with c3:
     placeholder=st.empty()
 ```
 It creates 3 columns, places a text_input widget in the first, a button in the second that will trigger the writing of the text content in an empty placeholder in the third column.
-Type some text and click the button to see what happens.               
+Type some text and click the button to see what happens.
+
 Note that, contrary to normal Streamlit syntax, txt is not refering directly to the text content string of the text_input widget, but is rather an object placeholder for the (future!) content of this text_input. It will be actualized in real-time if the content changes, and you may retrieve its value at any time by accessing its 'value' property, as in the snippet.
 
 Even though the Python interpreter maintains its session state, you may want to use st.session_state as you would in a Streamlit script.
