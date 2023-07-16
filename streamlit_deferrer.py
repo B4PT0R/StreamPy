@@ -101,6 +101,17 @@ class st_direct_exec_callable:
         self.deferrer.current_context = self.context
 
 
+class st_spinner:
+
+    def __init__(self,deferrer,name,context):
+        self.deferrer=deferrer
+        self.name=name
+        self.context=context
+
+    def __call__(self,*args,**kwargs):
+        return st_map(self.name)(*args,**kwargs)
+
+
 
 class st_one_shot_callable:
 
@@ -263,6 +274,9 @@ class st_deferrer:
             return obj
         elif attr in ['spinner','progress']:
             obj=st_direct_exec_callable(self,attr,context=self.current_context)
+            return obj
+        elif attr in ['spinner']:
+            obj=st_spinner(self,attr,context=self.current_context)
             return obj
         elif attr in ['sidebar']:
             obj=st_property(self,attr,context=self.current_context)
