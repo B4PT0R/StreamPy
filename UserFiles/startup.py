@@ -7,5 +7,3 @@ def plot(f):
     plt.plot(X,f(X))
     st.pyplot(fig)
 
-
-    

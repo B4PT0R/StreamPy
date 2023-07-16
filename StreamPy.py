@@ -4,6 +4,7 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
 from streamlit_ace import st_ace
+from streamlit_file_browser import st_file_browser
 from streamlit_deferrer import st_deferrer,st_output,KeyManager
 import streamlit as stl
 import os
@@ -44,11 +45,14 @@ if 'output_code' not in state:
 if 'editor_key' not in state:
     state.editor_key = km.gen_key()
 
+if 'console_queue' not in state:
+    state.console_queue=None
+
 if 'index' not in state:
     state.index = 0
 
 def save_as(name):
-    with open(name,'w') as f:
+    with open('./UserFiles/'+name,'w') as f:
         f.write(state.file_content)
     state.open_file=name
 
@@ -60,24 +64,25 @@ def close_editor():
     
 def run_editor_content():
     code=state.file_content
-    console.run(code)
+    with state.console_queue:
+        console.run(code)
     stl.experimental_rerun()
 
 def edit(file):
     state.show_editor=True
     state.open_file=file
     if not file=='buffer':
-        if not os.path.exists(file):
-            with open(file,'w') as f:
+        if not os.path.exists('./UserFiles/'+file):
+            with open('./UserFiles/'+file,'w') as f:
                 pass
-        with open(state.open_file,'r') as f:
+        with open('./UserFiles/'+state.open_file,'r') as f:
             state.file_content=f.read()
     else:
         state.file_content=''
 
 def restart():
     st.clear()
-    state.console=StConsole(st,startup='startup.py')
+    state.console=StConsole(st,startup='./UserFiles/startup.py')
     state.console.synchronize(globals())
 
     
@@ -85,7 +90,7 @@ def clear():
     st.clear()
 
 if 'console' not in state:
-    state.console = StConsole(st,startup='startup.py')
+    state.console = StConsole(st,startup='./UserFiles/startup.py')
 console=state.console
 console.synchronize(globals())
 
@@ -209,6 +214,7 @@ def make_input(queue):
 def make_console():
     welcome=stl.container()        
     queue=stl.container()
+    state.console_queue=queue
     input=stl.container()
 
     with welcome:
@@ -222,7 +228,7 @@ def make_console():
 
 def make_editor(editor_column):
     stl.subheader(f"Editing: {os.path.basename(state.open_file)}")
-    c1,c2,c3,c4,c5,c6=stl.columns([5,5,5,5,5,5])
+    c1,c2,c3,c4,c5,c6,c7,c8=stl.columns([5,5,5,6,6,5,5,5])
     with c1:
         new_butt=stl.button("New")
     with c2:
@@ -232,20 +238,32 @@ def make_editor(editor_column):
     with c4:
         save_as_butt=stl.button("Save as")
     with c5:
-        run_butt=stl.button("Run")
+        rename_butt=stl.button("Rename")
     with c6:
+        delete_butt=stl.button("Delete")
+    with c7:
+        run_butt=stl.button("Run")
+    with c8:
         close_butt=stl.button("Close")
     if close_butt:
         close_editor()
         stl.experimental_rerun()
     elif open_butt:
         def on_file_name_change():
-            if os.path.exists(state.file_name):
+            if not state.file_name==' ':
                 edit(state.file_name)
-            else:
-                with editor_column:
-                    stl.warning("This file doesn't exist!")
-        stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+        #stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+        basenames = [' ']+[os.path.basename(f) for f in os.listdir('./UserFiles/')]
+        stl.selectbox('Select a file:',basenames,on_change=on_file_name_change,index=0,key='file_name')
+    elif delete_butt:
+        def on_yes():
+            os.remove('./UserFiles/'+state.open_file)
+            edit('buffer')
+            state.editor_key=km.gen_key()
+            with editor_column:
+                stl.success("File deleted.")
+        #stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+        stl.selectbox('Are you sure you want to delete this file ?',['No','Yes'],on_change=on_yes,index=0,key='sure')  
     elif new_butt:
         edit('buffer')
         state.editor_key=km.gen_key()
@@ -265,8 +283,15 @@ def make_editor(editor_column):
             def on_file_name_change():
                 save_as(state.file_name)
                 with editor_column:
-                        stl.success("File saved.")
+                    stl.success("File saved.")
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+        if rename_butt:
+            def on_file_name_change():
+                os.remove('./UserFiles/'+state.open_file)
+                save_as(state.file_name)
+                with editor_column:
+                    stl.success("File renamed.")
+            stl.text_input("Enter new name of file:",on_change=on_file_name_change,key='file_name')
         state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=15, key=state.editor_key)
         if run_butt:
             run_editor_content()
