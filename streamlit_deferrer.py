@@ -248,7 +248,7 @@ class st_deferrer:
             obj=st_one_shot_callable(self,attr,context=self.current_context)
             self.append(obj)
             return obj
-        elif attr in ['spinner']:
+        elif attr in ['spinner','progress']:
             obj=st_direct_exec_callable(self,attr,context=self.current_context)
             return obj
         elif attr in ['sidebar']:
