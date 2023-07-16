@@ -56,7 +56,7 @@ def close_editor():
     state.file_content=None
 
     
-def run_editor():
+def run_editor_content():
     code=state.file_content
     console.run(code)
     stl.experimental_rerun()
@@ -260,7 +260,7 @@ def make_editor(editor_column):
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
         state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=15, key='editor')
         if run_butt:
-            run_editor()
+            run_editor_content()
         
 
 
