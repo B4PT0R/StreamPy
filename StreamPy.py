@@ -201,7 +201,7 @@ def make_input(queue):
     sti.refresh()
 
     if state.run_button:
-        stl.experimental_rerun()
+        stl.experimental_rerun() #This needs to be removed
 
 def make_console():
     welcome=stl.container()        
