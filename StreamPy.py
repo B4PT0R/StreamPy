@@ -4,7 +4,6 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
 from streamlit_ace import st_ace
-from streamlit_file_browser import st_file_browser
 from streamlit_deferrer import st_deferrer,st_output,KeyManager
 import streamlit as stl
 import os

@@ -6,9 +6,10 @@ Streamlit-based interactive python console
 
 StreamPy is a Python 3 interactive interpreter empowered by the rich input/output environment provided by Streamlit.
 
-To use it, first install streamlit package via pip.
+To use it, first install streamlit package and streamlit_ace component via pip.
 ```bash
 $ pip install streamlit
+$ pip install streamlit-ace
 ```
 
 Then copy [this repository](https://github.com/B4PT0R/StreamPy) to a local folder, cd to this folder and run :
@@ -17,7 +18,7 @@ $ streamlit run StreamPy.py
 ```
 A local web-server will launch and the app will open in your web-browser.
 
-Usage is pretty straightforward. Quite similarly to a Jupyter Notebook, just type your python commands in the input cell and click "Run" to get the results.
+Usage is pretty straightforward. Just type your python commands/scripts in the input cell and click "Run" to get the results.
 
 Feel free to use Streamlit commands in your scripts with preloaded prefix 'st', as you would normaly do in a Streamlit script. 
 The widgets will be outputted automaticly at the right place in the interactive console queue.
