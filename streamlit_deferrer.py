@@ -77,7 +77,7 @@ def call(callable):
             callable.outputs[0].value=results
 
 
-class st_spinner:
+class st_direct_exec_callable:
 
     def __init__(self,deferrer,name,context):
         self.deferrer=deferrer
@@ -249,7 +249,7 @@ class st_deferrer:
             self.append(obj)
             return obj
         elif attr in ['spinner']:
-            obj=st_spinner(self,attr,context=self.current_context)
+            obj=st_direct_exec_callable(self,attr,context=self.current_context)
             return obj
         elif attr in ['sidebar']:
             obj=st_property(self,attr,context=self.current_context)
