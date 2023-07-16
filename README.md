@@ -50,7 +50,8 @@ Apart from this, it's just normal Python and Streamlit commands!
 Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line).
 
 In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
-The Restart Session button will reinitialize the python session to its startup state. 
+The Restart Session button will reinitialize the python session to its startup state.
+
 Worth being noted: The python session runs the startup.py script at startup. Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
 
 ---Note for developers---
