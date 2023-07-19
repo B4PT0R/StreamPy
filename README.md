@@ -68,6 +68,6 @@ The 'st' prefix preloaded in the console is a st_deferrer class instance from th
 
 StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4 / Claude2) with coding capabilities, that will have the session in context, be able to interact with the user, show/run snippets, and use streamlit widgets profitably for richer output. 
 
-The project is mostly working but still an early prototype and have not yet been throughly tested. Some widgets/syntaxes just won't work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
+The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes just won't work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
 
 Happy testing!
