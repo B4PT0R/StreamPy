@@ -119,7 +119,7 @@ class StConsole(InteractiveConsole):
         L.start()
         while self.is_running or len(self.deferrer.pile)>0:
             self.deferrer.stream()
-            time.sleep(0.05)
+            time.sleep(0.001)
         R.join()
         L.join()
         self.deferrer.mode='static'
