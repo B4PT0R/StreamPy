@@ -4,6 +4,7 @@ Usage is pretty straightforward. Just type your python commands/scripts in the i
 
 Feel free to use Streamlit commands in your scripts with preloaded prefix 'st', as you would normaly do in a Streamlit script. 
 The widgets will be outputted automaticly at the right place in the interactive console queue.
+
 No need to import streamlit in your scripts, the 'st' prefix is actualy a special helper class instance that will take care of dealing with streamlit calls to render them adequetely in the console.
 
 As an example, try to run the following snippet in the console, demonstrating the basic features of streamlit:
