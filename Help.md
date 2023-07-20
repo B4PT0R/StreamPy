@@ -1,18 +1,4 @@
-# StreamPy
-Streamlit-based interactive python console
-
 StreamPy is a Python 3 interactive interpreter empowered by the rich input/output environment provided by Streamlit.
-
-To use it, first install the required packages via pip.
-```bash
-$ pip install streamlit, streamlit-ace, jsonpickle
-```
-
-Then copy [this repository](https://github.com/B4PT0R/StreamPy) to a local folder, cd to this folder and run :
-```bash
-$ streamlit run streampy.py 
-```
-A local web-server will launch and the app will open in your web-browser.
 
 Usage is pretty straightforward. Just type your python commands/scripts in the input cell and click "Run" to get the results.
 
@@ -57,13 +43,6 @@ The Restart Session button will reinitialize the python session to its startup s
 
 Worth being noted: The python session runs the startup.py script at startup. Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
 
----Note for developers---
-
-StreamPy features a special streamlit_deferrer module I designed which is crucial to manage interactivity and widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when desired. This allows handling (almost! Working on it...) all Streamlit functions and syntaxes in deferred manner for a seamless integration in the StreamPy interactive console. This is what happens under the hood when you run streamlit commands in the console using the 'st' prefix. 
-The 'st' prefix preloaded in the console is a st_deferrer class instance from the streamlit_deferrer module, not streamlit module itself. So avoid importing streamlit as st or it will overwrite the prefix with normal streamlit module and break the console's functionalities.
-
-StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4 / Claude2) with coding capabilities, that will have the session in context, be able to interact with the user, show/run snippets, and use streamlit widgets profitably for richer output. 
-
-The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes just won't work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
+The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes may not work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
 
 Happy testing!

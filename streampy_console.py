@@ -42,7 +42,7 @@ class OutputInterceptor:
         pass 
 
 
-class StConsole(InteractiveConsole):
+class Console(InteractiveConsole):
 
     def __init__(self,deferrer,names=None,startup=None):
         self.names=names or {}

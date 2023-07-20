@@ -1,4 +1,4 @@
-from StConsole import StConsole
+from streampy_console import Console
 import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
@@ -8,65 +8,84 @@ from streamlit_deferrer import st_deferrer,st_output,KeyManager
 import streamlit as stl
 import os
 
-state=stl.session_state
+#-------------Initialize session_state variables--------------
 
+state=stl.session_state #shortcut
+
+#Useful to generate unique keys for widgets
 if 'key_manager' not in state:
     state.key_manager=KeyManager()
 km=state.key_manager
 
+#Main streamlit commands deferrer for the console queue (allows using streamlit commands directly in the input cell)
 if 'deferrer' not in state:
     state.deferrer=st_deferrer(key_manager=km)
 st=state.deferrer
 st.reset()
 
+#the file currently open in the editor
 if 'open_file' not in state:
     state.open_file=None
 
+#the content of the file open in the editor
 if 'file_content' not in state:
     state.file_content=None
 
+#whether to show the editor or not
 if 'show_editor' not in state:
     state.show_editor=False
 
+#Not so useful here, will be removed later
 if 'input_deferrer' not in state:
     state.input_deferrer=st_deferrer(key_manager=km)
 sti=state.input_deferrer
 
+#The current key of the input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
 if 'input_key' not in state:
     state.input_key = km.gen_key()
 
+#The code displayed in the input cell
 if 'input_code' not in state:
     state.input_code = st_output(deferrer=sti,context=None)
 
+#The code outputted by the input cell
 if 'output_code' not in state:
     state.output_code = st_output(deferrer=sti,context=None)
 
+#The current key of the editor ace widget
 if 'editor_key' not in state:
     state.editor_key = km.gen_key()
 
+#A variable allowing to access the console queue container from anywhere
 if 'console_queue' not in state:
     state.console_queue=None
 
+#The current input history index
 if 'index' not in state:
     state.index = 0
 
+#------------------------------Main functions-------------------------------------
+
+#Save the content of the editor as... 
 def save_as(name):
     with open('./UserFiles/'+name,'w') as f:
         f.write(state.file_content)
     state.open_file=name
 
+#Closes the editor
 def close_editor():
     state.show_editor=False
     state.open_file=None
     state.file_content=None
 
-    
+#Runs the code content open in the editor in the console  
 def run_editor_content():
     code=state.file_content
     with state.console_queue:
         console.run(code)
     stl.experimental_rerun()
 
+#Opens a new buffer or file in the editor
 def edit(file):
     state.show_editor=True
     state.open_file=file
@@ -79,28 +98,30 @@ def edit(file):
     else:
         state.file_content=''
 
+#Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=StConsole(st,startup='./UserFiles/startup.py')
+    state.console=Console(st,startup='./UserFiles/startup.py')
     state.console.synchronize(globals())
 
-    
+#Clears the console's queue
 def clear():
     st.clear()
 
+#Declares the python console in which the code will be run.
 if 'console' not in state:
-    state.console = StConsole(st,startup='./UserFiles/startup.py')
+    state.console = Console(st,startup='./UserFiles/startup.py')
 console=state.console
 console.synchronize(globals())
 
 
-
+#Run some code in the python console
 def process(code,queue):
     if not (code=="" or code==None):
         with queue:
             console.run(code)
 
-
+#Sets the sidebar menu
 def make_menu():
    with stl.sidebar:
         stl.subheader("Menu")
@@ -115,79 +136,27 @@ def make_menu():
         stl.button("Restart Session",on_click=on_restart_click)
 
 
-
+#Sets the welcome message header and help expander
 def make_welcome():
     stl.subheader("Welcome to StreamPy interactive interpreter.")
     with stl.expander("Click here to get help."):
-        stl.write("""
-StreamPy is a Python 3 interactive interpreter empowered by the rich input/output environment provided by Streamlit.
+        with open("Help.md",'r') as f:
+            stl.write(f.read())
 
-Usage is pretty straightforward. Quite similarly to a Jupyter Notebook, just type your python commands in the input cell and click "Run" to get the results.
-
-Feel free to use Streamlit commands in your scripts with preloaded prefix 'st', as you would normaly do in a Streamlit script. 
-The widgets will be outputted automaticly at the right place in the interactive console queue.
-No need to import streamlit in your scripts, the 'st' prefix is actualy a special helper class instance that will take care of dealing with streamlit calls to render them adequetely in the console.
-
-As an example, try to run the following snippet in the console, demonstrating the basic features of streamlit:
-```python
-c1,c2,c3=st.columns(3)
-with c1:
-    txt=st.text_input(label="Enter text here:")
-with c2:
-    def on_button_click():
-        with placeholder:
-            st.write("You entered: "+txt.value)
-    st.button("Click Me!",on_click=on_button_click)
-with c3:
-    placeholder=st.empty()
-```
-It creates 3 columns, places a text_input widget in the first, a button in the second that will trigger the writing of the text content in an empty placeholder in the third column.
-Type some text and click the button to see what happens.
-
-Note that, contrary to normal Streamlit syntax, txt is not refering directly to the text content string of the text_input widget, but is rather an object placeholder for the (future!) content of this text_input. It will be actualized in real-time if the content changes, and you may retrieve its value at any time by accessing its 'value' property, as in the snippet.
-
-Even though the Python interpreter maintains its session state, you may want to use st.session_state as you would in a Streamlit script.
-To ease widget's keys managment, feel free to use the implemented key generator:
-```python
-my_text_input_key=st.gen_key()
-st.text_input("Enter text here:",key=my_text_input_key)
-``` 
-This will generate a unique key for your widget's state that you may latter access via :
-```python
-my_text_input_state=st.session_state[my_text_input_key]
-``` 
-Apart from this, it's just normal Python and Streamlit commands!
-
-Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line).
-
-In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
-The Restart Session button will reinitialize the python session to its startup state.
-
-Worth being noted: The python session runs the startup.py script at startup. Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
-
----Note for developers---
-
-StreamPy features a special streamlit_deferrer module I designed which is crucial to manage interactivity and widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when desired. This allows handling (almost! Working on it...) all Streamlit functions and syntaxes in deferred manner for a seamless integration in the StreamPy interactive console. This is what happens under the hood when you run streamlit commands in the console using the 'st' prefix. 
-The 'st' prefix preloaded in the console is a st_deferrer class instance from the streamlit_deferrer module, not streamlit module itself. So avoid importing streamlit as st or it will overwrite the prefix with normal streamlit module and break the console's functionalities.
-
-StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4 / Claude2) with coding capabilities, that will have the session in context, be able to interact with the user, show/run snippets, and use streamlit widgets profitably for richer output. 
-
-The project is mostly working but still an early prototype and have not yet been throughly tested. Some widgets/syntaxes just won't work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
-
-Happy testing!  
-""")
- 
+#Sets the input cell part 
 def make_input(queue):
     sti.clear()
     n=len(console.inputs)
     if state.index<=0:
         state.index=0
-        state.input_code.value=""
     elif state.index>n:
         state.index=n
+
+    if n==0 or state.index==0:
+        state.input_code.value=""
+    else:   
         state.input_code.value=console.inputs[n-state.index]
-    else:
-        state.input_code.value=console.inputs[n-state.index]
+    
     state.output_code = sti.ace(value=state.input_code.value, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
     a,_,b,_,c=sti.columns([1,3,1,3,1],gap='small')
     with a:
@@ -209,7 +178,7 @@ def make_input(queue):
 
     sti.refresh()
 
-
+#Displays the whole console queue
 def make_console():
     welcome=stl.container()        
     queue=stl.container()
@@ -225,6 +194,7 @@ def make_console():
     with input:
         make_input(queue)
 
+#Displays the editor (could be simplified, reorganized, but I somewhat struggled with widget refreshing. This mess is the result of this struggle :) )
 def make_editor(editor_column):
     stl.subheader(f"Editing: {os.path.basename(state.open_file)}")
     c1,c2,c3,c4,c5,c6,c7,c8=stl.columns([5,5,5,6,6,5,5,5])
@@ -296,7 +266,7 @@ def make_editor(editor_column):
             run_editor_content()
         
 
-
+#-----------------------------Main app session's logic-------------------------
 if state.show_editor==True:
     stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
     make_menu()
