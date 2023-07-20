@@ -122,19 +122,10 @@ def st_map(attr):
 @contextmanager
 def ctx(context):
     if not context==None:
-        if isinstance(context,st_one_shot_callable):
+        if isinstance(context,(st_callable,st_one_shot_callable)):
             with st_map(context.name)(*context.args,**context.kwargs):
                 yield
-        if isinstance(context,st_direct_exec_callable):
-            with context.value:
-                yield
-        if isinstance(context,st_callable):
-            with st_map(context.name)(*context.args,**context.kwargs):
-                yield
-        elif isinstance(context,st_output):
-            with context.value:
-                yield
-        elif isinstance(context,st_property):
+        elif isinstance(context,(st_output,st_property,st_direct_exec_callable)):
             with context.value:
                 yield
     else:
@@ -151,34 +142,11 @@ def call(callable):
         else:
             callable.outputs[0].value=results
 
+class st_object:
 
-class st_direct_exec_callable:
-
-    def __init__(self,deferrer,name,context):
+    def __init__(self,deferrer,context=None):
         self.deferrer=deferrer
-        self.name=name
         self.context=context
-
-    def __call__(self,*args,**kwargs):
-        return st_map(self.name)(*args,**kwargs)
-    
-
-class st_one_shot_callable:
-
-    def __init__(self,deferrer,name,context):
-        self.deferrer=deferrer
-        self.name=name
-        self.context=context
-        self.has_exec=False
-        self.outputs=[]
-
-
-    def __call__(self,*args,**kwargs):
-        self.args=args
-        self.kwargs=kwargs
-        obj=st_output(deferrer=self.deferrer,context=self.context)
-        self.outputs.append(obj)
-        return obj
 
     def __enter__(self):
         self.context = self.deferrer.current_context
@@ -187,68 +155,23 @@ class st_one_shot_callable:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.deferrer.current_context = self.context
+
+class st_executable(st_object):
+
+    def __init__(self,deferrer,name,context=None):
+        st_object.__init__(self,deferrer,context)
+        self.name=name
+        self.has_exec=False
 
     def exec(self):
         with ctx(self.context):
             call(self)
         self.has_exec=True
-        self.deferrer.queue.remove(self)
 
-class st_output:
-
-    def __init__(self,deferrer,context):
-        self.value=None
-        self.deferrer=deferrer
-        self.context=context
-
-    def __enter__(self):
-        self.context = self.deferrer.current_context
-        self.deferrer.current_context = self
-        return self
-    
-    def __getattr__(self,attr):
-        obj=st_callable(self.deferrer,attr,context=self)
-        self.deferrer.append(obj)
-        return obj
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.deferrer.current_context = self.context
-
-class st_property:
-
+class st_callable(st_executable):
     def __init__(self,deferrer,name,context=None):
-        self.has_exec=False
-        self.deferrer=deferrer
-        self.name=name
-        self.context=context
-        self.value=None
-
-    def __enter__(self):
-        self.context = self.deferrer.current_context
-        self.deferrer.current_context = self
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.deferrer.current_context = self.context
-
-    def __getattr__(self,attr):
-        obj=st_callable(self.deferrer,attr,context=self)
-        self.deferrer.append(obj)
-        return obj
-
-    def exec(self):
-        with ctx(self.context):
-            self.value=st_map(self.name)
-        self.has_exec=True
-
-
-class st_callable:
-    def __init__(self,deferrer,name,context=None):
-        self.has_exec=False
+        st_executable.__init__(self,deferrer,name,context)
         self.iter_counter=0
-        self.deferrer=deferrer
-        self.context=context
-        self.name=name
         self.args=None
         self.kwargs=None
         self.outputs=[]
@@ -263,7 +186,6 @@ class st_callable:
             obj=st_output(deferrer=self.deferrer,context=self.context)
             self.outputs.append(obj)
             return obj
-
 
     def __iter__(self):
         return self
@@ -286,19 +208,57 @@ class st_callable:
         else:
             return 1
 
+class st_output(st_object):
+
+    def __init__(self,deferrer,context):
+        st_object.__init__(self,deferrer,context)
+        self.value=None
+
+    def __getattr__(self,attr):
+        obj=st_callable(self.deferrer,attr,context=self)
+        self.deferrer.append(obj)
+        return obj
+    
+class st_property(st_executable):
+
+    def __init__(self,deferrer,name,context=None):
+        st_executable.__init__(self,deferrer,name,context)
+        self.value=None
+
+    def __getattr__(self,attr):
+        obj=st_callable(self.deferrer,attr,context=self)
+        self.deferrer.append(obj)
+        return obj
+
+
+class st_direct_exec_callable:
+
+    def __init__(self,deferrer,name,context):
+        self.deferrer=deferrer
+        self.name=name
+        self.context=context
+
+    def __call__(self,*args,**kwargs):
+        return st_map(self.name)(*args,**kwargs)
+    
+
+class st_one_shot_callable(st_executable):
+
+    def __init__(self,deferrer,name,context=None):
+        st_executable.__init__(self,deferrer,name,context)
+        self.outputs=[]
+
+
+    def __call__(self,*args,**kwargs):
+        self.args=args
+        self.kwargs=kwargs
+        obj=st_output(deferrer=self.deferrer,context=self.context)
+        self.outputs.append(obj)
+        return obj
+
     def exec(self):
-        with ctx(self.context):
-            call(self)
-        self.has_exec=True
-
-    def __enter__(self):
-        self.context = self.deferrer.current_context
-        self.deferrer.current_context = self
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.deferrer.current_context = self.context
-
+        super().exec()
+        self.deferrer.queue.remove(self)
 
 class st_deferrer:
     
