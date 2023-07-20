@@ -7,10 +7,6 @@ import sys
 import time
 from contextlib import contextmanager
 
-def wait_until(condition):
-    while not condition:
-        time.sleep(0.005)
-
 @contextmanager
 def redirect_outputs(target):
     stdout_fd=sys.stdout
@@ -31,7 +27,8 @@ class OutputInterceptor:
         if text.endswith('\n'):
             self.queue.put(self.buffer)
             self.buffer = ''
-            wait_until(self.queue.empty())
+            while not self.queue.empty():
+                time.sleep(0.005)
             
     
     def get(self):
@@ -123,7 +120,7 @@ class StConsole(InteractiveConsole):
 
         while self.is_running or len(self.deferrer.pile)>0:
             self.deferrer.stream()
-            time.sleep(0.05)
+            time.sleep(0.005)
 
         R.join()
         L.join()

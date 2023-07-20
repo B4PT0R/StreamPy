@@ -84,9 +84,6 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
 
-def wait_until(condition):
-    while not condition:
-        time.sleep(0.005)
 
 class KeyManager:
     def __init__(self):
@@ -304,7 +301,8 @@ class st_deferrer:
     def append(self,obj):
         self.pile.append(obj)
         if self.mode=='streamed':
-            wait_until(len(self.pile)==0)
+            while not len(self.pile)==0:
+                time.sleep(0.005)
 
     def remove(self,obj):
         if obj in self.pile:
