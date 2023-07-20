@@ -59,7 +59,8 @@ Things become even trickier when having to handle syntaxes such as :
 ```
 But it's basicaly a generalization of the first two examples, except we need to unpack 2 st_outputs after the call of std.columns.
 That's why some st_callables must implement an __iter__ method (to allow unpacking of the outputs).
-Each st_output object (c1,c2) must also receive it's value (an actual streamlit column) from the same callable at rendering time. 
+Each st_output object (c1,c2) must also receive it's value (an actual streamlit column) from the same callable at rendering time.
+That's why every st_callable keeps a list of its ouputs. 
 
 Some other streamlit syntaxes such as :
 ```python
@@ -74,15 +75,18 @@ e.write("hello")
 require further logic : namely implementing property-like syntax via the st_property object in the first, and implementing __getattr__  method for st_outputs in the second.
 
 Some special streamlit functions require special handling for a smooth integration in the console flow, such as:
+
     -streamlit.column_config (which is supposed to return directly so that its result can be passed as argument immediately)
+
     -streamlit.spinner & streamlit.progress (must be executed while the python code is running : st_direct_exec_callables)
+
     -streamlit.balloons & streammlit.snow (to avoid having balloons/snow appearing on screen at every refresh : st_one_shot_callables are only rendered one time)
 
 The st_deferrer.stream method is here to help with rendering widgets in real-time while they are piled in the deferrer by the python interpreter running in a separate thread.
 
 For convenience I added a KeyManager class allowing to automate widget key generation and ease keys management. 
 
-Another feature is, once a queue has been constituted, it can be serialized using jsonpickle module and saved in a file to serve as a template.
+Another feature : once a queue has been constituted, it can be serialized using jsonpickle module and saved in a file to serve as a template.
 Useful to save/load parts of your app, and reuse them later in other projects.  
 
 Well, I hope these explanations will help clarify a bit the intent of the code.
@@ -90,7 +94,7 @@ This is for sure one of the most challenging coding task I personaly encountered
 I don't pretend to be an experimented python developer, and I'm sure there are lots of ways this code can be improved.
 All this is still a work in progress but functionning enough to handle most common streamlit syntaxes and almost all widgets in the console.
 I guess it's a bit of a hack that extends streamlit possibilities slightly beyond what they were initialy meant to be.
-Especialy when dealing with interactive rendering and threads (a thread fills the std pile, another calls std.stream to render the widgets).
+Especialy when dealing with interactive rendering and threads (a thread fills the std pile, the main application calls std.stream to render the widgets).
 
 I invit brave developers amongst readers to help me improve it, as I intuit it can become a useful feature for streamlit users.
 I also hope that some streamlit developers, with their hindsight on internal streamlit functionning, will take a look at it and hopefuly give me some feedback and hints on how to make it more robust and efficient at encapsulating streamlit's logic.
