@@ -15,7 +15,7 @@ if 'key_manager' not in state:
 km=state.key_manager
 
 if 'deferrer' not in state:
-    state.deferrer=st_deferrer(key_manager=km,mode='streamed')
+    state.deferrer=st_deferrer(key_manager=km)
 st=state.deferrer
 st.reset()
 
@@ -278,13 +278,13 @@ def make_editor(editor_column):
                     with editor_column:
                         stl.success("File saved.")
                 stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        if save_as_butt:
+        elif save_as_butt:
             def on_file_name_change():
                 save_as(state.file_name)
                 with editor_column:
                     stl.success("File saved.")
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        if rename_butt:
+        elif rename_butt:
             def on_file_name_change():
                 os.remove('./UserFiles/'+state.open_file)
                 save_as(state.file_name)

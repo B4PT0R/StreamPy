@@ -12,7 +12,7 @@ Instead, std will create a st_callable object with .name='write' and .args=("hel
 You may pile this way other streamlit calls, and each will be encoded as st_objects and piled in the queue, on top of previous ones.
 Only when the user calls std.refresh() will every object in the queue be "executed" in order, from first to last (the callable 'write' from streamlit module will be passed argument "hello" and be actualy called, thus rendering the widget on screen). 
 This way you may postpone streamlit widgets rendering.
-The tricky part is implement context managment and outputs correctly...
+The tricky part is implement context managment and outputs correctly.
 Let's see outputs first.
 For instance, you may want to write:
     txt=std.text_input("Enter text here:")
@@ -54,7 +54,7 @@ Some special streamlit functions require special handling for a smooth integrati
     streamlit.spinner & streamlit.progress (must be executed while the python code is running : st_direct_exec_callables)
     streamlit.balloons & streammlit.snow (to avoid having balloons/snow appearing on screen at every refresh : st_one_shot_callables are only rendered one time)
 
-The st_deferrer.stream method is here to help with rendering widgets in real-time while they are piled by the python interpreter running in a separate thread.
+The st_deferrer.stream method is here to help with rendering widgets in real-time while they are piled in the deferrer by the python interpreter running in a separate thread.
 
 For convenience I added a KeyManager class allowing to automate widget key generation to avoid DuplicateWidgetID errors. 
 
@@ -181,12 +181,12 @@ class st_callable(st_executable):
     def __call__(self,*args,**kwargs):
         self.args=args
         self.kwargs=kwargs
-     
         if self.name in ['columns','tabs']:
             return self
         else:
             obj=st_output(deferrer=self.deferrer,context=self.context)
             self.outputs.append(obj)
+            self.deferrer.append(self)
             return obj
 
     def __iter__(self):
@@ -200,6 +200,7 @@ class st_callable(st_executable):
             return obj 
         else:
             self.iter_counter=0
+            self.deferrer.append(self)
             raise StopIteration   
 
     def __len__(self):
@@ -226,6 +227,7 @@ class st_property(st_executable):
     def __init__(self,deferrer,name,context=None):
         st_executable.__init__(self,deferrer,name,context)
         self.value=None
+        self.deferrer.append(self)
 
     def __getattr__(self,attr):
         obj=st_callable(self.deferrer,attr,context=self)
@@ -256,6 +258,7 @@ class st_one_shot_callable(st_executable):
         self.kwargs=kwargs
         obj=st_output(deferrer=self.deferrer,context=self.context)
         self.outputs.append(obj)
+        self.deferrer.append(self)
         return obj
 
     def exec(self):
@@ -269,7 +272,6 @@ class st_deferrer:
             self.key_manager=KeyManager()
         else:
             self.key_manager=key_manager
-        
         self.mode=mode
         self.queue=[]
         self.pile=[]
@@ -282,26 +284,23 @@ class st_deferrer:
     def __getattr__(self,attr):
         if attr in ['balloons','snow','experimental_rerun']:
             obj=st_one_shot_callable(self,attr,context=self.current_context)
-            self.append(obj)
             return obj
         elif attr in ['spinner','progress']:
             obj=st_direct_exec_callable(self,attr,context=self.current_context)
             return obj
         elif attr in ['sidebar']:
             obj=st_property(self,attr,context=self.current_context)
-            self.append(obj)
             return obj
         elif attr in ['column_config']:
             return st.column_config
         else:
             obj=st_callable(self,attr,context=self.current_context)
-            self.append(obj)
             return obj
 
     def append(self,obj):
         self.pile.append(obj)
         if self.mode=='streamed':
-            while not len(self.pile)==0:
+            while len(self.pile)>0:
                 time.sleep(0.005)
 
     def remove(self,obj):

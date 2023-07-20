@@ -28,7 +28,7 @@ class OutputInterceptor:
             self.queue.put(self.buffer)
             self.buffer = ''
             while not self.queue.empty():
-                time.sleep(0.005)
+                time.sleep(0.001)
             
     
     def get(self):
@@ -103,9 +103,8 @@ class StConsole(InteractiveConsole):
 
 
     def handle_output(self,output):
-        self.results[-1].append(output)
         self.deferrer.text(output)
-        
+        self.results[-1].append(output)
 
     def run(self,source):
         self.inputs.append(source)
@@ -115,18 +114,16 @@ class StConsole(InteractiveConsole):
         L=Thread(target=self.listen_thread)
         add_script_run_ctx(L)
 
+        self.deferrer.mode='streamed'
         R.start()
         L.start()
-
         while self.is_running or len(self.deferrer.pile)>0:
             self.deferrer.stream()
-            time.sleep(0.005)
-
+            time.sleep(0.05)
         R.join()
         L.join()
+        self.deferrer.mode='static'
 
-        
-                
     def get_result(self):
         return '\n'.join(self.results[-1])
     
