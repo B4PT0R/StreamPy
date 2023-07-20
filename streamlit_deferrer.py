@@ -9,17 +9,17 @@ and then make streamlit calls with it as you would with the steamlit module:
     std.write("hello")
 but, here, the write widget won't be rendered directly.
 Instead, std will create a st_callable object with .name='write' and .args=("hello",) and append it to its queue. That's pretty much it.
-You may pile this way other streamlit calls, and each will be encoded as objects and piled in the queue, on top of previous ones.
+You may pile this way other streamlit calls, and each will be encoded as st_objects and piled in the queue, on top of previous ones.
 Only when the user calls std.refresh() will every object in the queue be "executed" in order, from first to last (the callable 'write' from streamlit module will be passed argument "hello" and be actualy called, thus rendering the widget on screen). 
 This way you may postpone streamlit widgets rendering.
-The tricky part is to implement context managment and outputs correctly...
+The tricky part is implement context managment and outputs correctly...
 Let's see outputs first.
 For instance, you may want to write:
     txt=std.text_input("Enter text here:")
 Here std will similarly create a st_callable object with .name='text_input' and .args=("Enter text here:",) and pile it to its queue.
-Normaly steamlit.text_input is supposed to return a value (the text content of the widget).
-But this "widget" only exists in an encoded form in std, namely a st_callable for now, so there in no text to be returned !
-Therefore we must make std return a "something" named txt. Something that will hold the future text content of the future actual text_input widget.
+steamlit.text_input is supposed to return a value when called (the text content of the widget).
+But this "widget" only exists in an encoded form in std, namely a st_callable for now, and has not been rendered yet, so there in no text to be returned!
+Therefore we must make std return something named txt. Something that will hold the future text content of the future text_input widget.
 This is what the st_output class is for. It is basicaly a placeholder object, that will receive the text content of the widget as soon as it becomes available.
 It's .value property will allow to access this text content in due time, but will be None until the widget is rendered and the text content actualy exists.
 There is more to it, but let's leave that for now.
@@ -51,7 +51,7 @@ require further logic : implementing property-like syntax via the st_property ob
 
 Some special streamlit functions require special handling for a smooth integration in the console flow, such as:
     streamlit.column_config (which is supposed to return directly so that its result can be passed as argument immediately)
-    streamlit.spinner & streamlit.progress (must be executed will the python code is running : st_direct_exec_callables)
+    streamlit.spinner & streamlit.progress (must be executed while the python code is running : st_direct_exec_callables)
     streamlit.balloons & streammlit.snow (to avoid having balloons/snow appearing on screen at every refresh : st_one_shot_callables are only rendered one time)
 
 The st_deferrer.stream method is here to help with rendering widgets in real-time while they are piled by the python interpreter running in a separate thread.
@@ -79,9 +79,14 @@ from streamlit_ace import st_ace
 from contextlib import contextmanager
 import jsonpickle as jsp
 import logging
+import time
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
+
+def wait_until(condition):
+    while not condition:
+        time.sleep(0.005)
 
 class KeyManager:
     def __init__(self):
@@ -258,15 +263,17 @@ class st_one_shot_callable(st_executable):
 
     def exec(self):
         super().exec()
-        self.deferrer.queue.remove(self)
+        self.deferrer.remove(self)
 
 class st_deferrer:
     
-    def __init__(self,key_manager=None):
+    def __init__(self,key_manager=None,mode='static'):
         if key_manager==None:
             self.key_manager=KeyManager()
         else:
             self.key_manager=key_manager
+        
+        self.mode=mode
         self.queue=[]
         self.pile=[]
         self.session_state=st.session_state
@@ -296,7 +303,14 @@ class st_deferrer:
 
     def append(self,obj):
         self.pile.append(obj)
-        self.queue.append(obj)    
+        if self.mode=='streamed':
+            wait_until(len(self.pile)==0)
+
+    def remove(self,obj):
+        if obj in self.pile:
+            self.pile.remove(obj)
+        if obj in self.queue:
+            self.queue.remove(obj)
 
     def stream(self):
         if not len(self.pile)==0:
@@ -307,6 +321,7 @@ class st_deferrer:
                     obj.exec()
                 except DuplicateWidgetID:
                     pass
+            self.queue.append(obj)
 
     def refresh(self):
         for obj in self.queue:
@@ -316,6 +331,9 @@ class st_deferrer:
                     obj.exec()
                 except DuplicateWidgetID:
                     pass
+        while len(self.pile)>0:
+            self.stream()
+        
 
     def reset(self):
         for obj in self.queue:

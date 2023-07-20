@@ -15,7 +15,7 @@ if 'key_manager' not in state:
 km=state.key_manager
 
 if 'deferrer' not in state:
-    state.deferrer=st_deferrer(key_manager=km)
+    state.deferrer=st_deferrer(key_manager=km,mode='streamed')
 st=state.deferrer
 st.reset()
 
