@@ -1,6 +1,7 @@
 import streamlit as st
+from components import ImportComponents
+COMPONENTS=ImportComponents()
 from streamlit.errors import DuplicateWidgetID
-from streamlit_ace import st_ace
 from contextlib import contextmanager
 import jsonpickle as jsp
 import logging
@@ -41,8 +42,8 @@ def st_map(attr):
         try:
             return getattr(st,attr)
         except:
-            if attr=='ace':
-                return st_ace
+            if attr in COMPONENTS:
+                return COMPONENTS[attr]
             else:
                 raise Exception(f"Unknown streamlit attribute: {attr}")
 

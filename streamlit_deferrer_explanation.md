@@ -80,7 +80,7 @@ Some special streamlit functions require special handling for a smooth integrati
 
 The st_deferrer.stream method is here to help with rendering widgets in real-time while they are piled in the deferrer by the python interpreter running in a separate thread.
 
-For convenience I added a KeyManager class allowing to automate widget key generation to ease keys management. 
+For convenience I added a KeyManager class allowing to automate widget key generation and ease keys management. 
 
 Another feature is, once a queue has been constituted, it can be serialized using jsonpickle module and saved in a file to serve as a template.
 Useful to save/load parts of your app, and reuse them later in other projects.  
