@@ -1,11 +1,11 @@
-from streampy_console import Console
 import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
-from streamlit_ace import st_ace
-from streamlit_deferrer import st_deferrer,st_output,KeyManager
 import streamlit as stl
+from streampy_console import Console
+from streamlit_ace import st_ace
+from streamlit_deferrer import st_deferrer,KeyManager
 import os
 
 #-------------Initialize session_state variables--------------
@@ -23,6 +23,11 @@ if 'deferrer' not in state:
 st=state.deferrer
 st.reset()
 
+#Declares the python console in which the code will be run.
+if 'console' not in state:
+    state.console = Console(st,names=globals(),startup='./UserFiles/startup.py')
+console=state.console
+
 #the file currently open in the editor
 if 'open_file' not in state:
     state.open_file=None
@@ -35,30 +40,29 @@ if 'file_content' not in state:
 if 'show_editor' not in state:
     state.show_editor=False
 
-#Not so useful here, will be removed later
-if 'input_deferrer' not in state:
-    state.input_deferrer=st_deferrer(key_manager=km)
-sti=state.input_deferrer
-
 #The current key of the input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
 if 'input_key' not in state:
     state.input_key = km.gen_key()
 
 #The code displayed in the input cell
 if 'input_code' not in state:
-    state.input_code = st_output(deferrer=sti,context=None)
+    state.input_code = ''
 
 #The code outputted by the input cell
 if 'output_code' not in state:
-    state.output_code = st_output(deferrer=sti,context=None)
+    state.output_code = ''
 
 #The current key of the editor ace widget
 if 'editor_key' not in state:
     state.editor_key = km.gen_key()
 
-#A variable allowing to access the console queue container from anywhere
+#A variable allowing access to the console queue container from anywhere
 if 'console_queue' not in state:
     state.console_queue=None
+
+#A variable allowing access to the editor's container from anywhere
+if 'console_queue' not in state:
+    state.editor_container=None
 
 #The current input history index
 if 'index' not in state:
@@ -101,24 +105,17 @@ def edit(file):
 #Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=Console(st,startup='./UserFiles/startup.py')
-    state.console.synchronize(globals())
+    state.console=Console(st,names=globals(),startup='./UserFiles/startup.py')
+
 
 #Clears the console's queue
 def clear():
     st.clear()
 
-#Declares the python console in which the code will be run.
-if 'console' not in state:
-    state.console = Console(st,startup='./UserFiles/startup.py')
-console=state.console
-console.synchronize(globals())
-
-
 #Run some code in the python console
-def process(code,queue):
+def process(code):
     if not (code=="" or code==None):
-        with queue:
+        with state.console_queue:
             console.run(code)
 
 #Sets the sidebar menu
@@ -144,8 +141,7 @@ def make_welcome():
             stl.write(f.read())
 
 #Sets the input cell part 
-def make_input(queue):
-    sti.clear()
+def make_input():
     n=len(console.inputs)
     if state.index<=0:
         state.index=0
@@ -153,30 +149,30 @@ def make_input(queue):
         state.index=n
 
     if n==0 or state.index==0:
-        state.input_code.value=""
+        state.input_code=""
     else:   
-        state.input_code.value=console.inputs[n-state.index]
+        state.input_code=console.inputs[n-state.index]
     
-    state.output_code = sti.ace(value=state.input_code.value, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
-    a,_,b,_,c=sti.columns([1,3,1,3,1],gap='small')
+    state.output_code = st_ace(value=state.input_code, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
+    a,_,b,_,c=stl.columns([1,3,1,3,1],gap='small')
     with a:
         def on_previous_click():
             state.index+=1
-            state.input_key=sti.gen_key()
-        sti.button("Prev.", key='previous',on_click=on_previous_click)
+            state.input_key=km.gen_key()
+        stl.button("Prev.", key='previous',on_click=on_previous_click)
     with b:
         def on_run_click():
             state.index=0
-            process(state.output_code.value,queue)
-            state.input_key=sti.gen_key()
-        sti.button("Run",key='run_button',on_click=on_run_click)
+            process(state.output_code)
+            state.input_key=km.gen_key()
+        stl.button("Run",key='run_button',on_click=on_run_click)
     with c:  
         def on_next_click():
             state.index-=1
-            state.input_key=sti.gen_key()
-        sti.button("Next", key='next',on_click=on_next_click)
+            state.input_key=km.gen_key()
+        stl.button("Next", key='next',on_click=on_next_click)
 
-    sti.refresh()
+
 
 #Displays the whole console queue
 def make_console():
@@ -192,7 +188,7 @@ def make_console():
         st.refresh()
 
     with input:
-        make_input(queue)
+        make_input()
 
 #Displays the editor (could be simplified, reorganized, but I somewhat struggled with widget refreshing. This mess is the result of this struggle :) )
 def make_editor(editor_column):

@@ -65,9 +65,9 @@ class Console(InteractiveConsole):
     def send_out(self,name):
         return self.names[name]
 
-    def synchronize(self,names):
-        for name in names:
-            self.send_in(name,names[name])                    
+    def update(self,names):
+        self.names.update(names)
+                  
 
     def runfile(self,path):
         try:

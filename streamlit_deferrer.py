@@ -54,8 +54,13 @@ def ctx(context):
             with st_map(context.name)(*context.args,**context.kwargs):
                 yield
         elif isinstance(context,(st_output,st_property,st_direct_exec_callable)):
-            with context.value:
-                yield
+            if not context.value is None:
+                with context.value:
+                    yield
+            else:
+                yield None
+        else:
+            yield None
     else:
         yield None
 
@@ -144,6 +149,7 @@ class st_output(st_object):
         self.value=None
 
     def __getattr__(self,attr):
+        log.debug("In getattr : "+attr)
         obj=st_callable(self.deferrer,attr,context=self)
         self.deferrer.append(obj)
         return obj
@@ -157,7 +163,6 @@ class st_property(st_executable):
 
     def __getattr__(self,attr):
         obj=st_callable(self.deferrer,attr,context=self)
-        self.deferrer.append(obj)
         return obj
 
 
