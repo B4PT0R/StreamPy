@@ -16,13 +16,13 @@ std.write("hello")
 ```
 but, here, the write widget won't be rendered directly.
 
-Instead, std will create a st_callable object with .name='write'. The call will set its .args property to ("hello",) and the object will be appended it to a list (its .queue property). That's pretty much it.
+Instead, std will create a st_callable object with .name='write'. The call will set its .args property to ("hello",) and the object will be appended it to a list (the std.queue property). That's pretty much it.
 
 You may add this way other streamlit calls, and each will be encoded as st_objects and piled in the queue, on top of previous ones.
 
-Only when the user calls std.refresh() will every object in the queue be "executed" in order, from first to last (Here, the callable 'write' from streamlit module will be fetched, passed argument "hello" and be actualy called, thus rendering the widget on screen).
+Only when the user calls std.refresh() will every object in the queue be "executed" (=rendered on screen) in order, from first to last. In our case, the callable 'write' from streamlit module will be fetched, passed argument "hello" and be actualy called, thus rendering the write widget on screen.
 
-This way you may postpone streamlit widgets rendering (useful to prepare widgets in advance and avoid a blocking behaviour while the app is running).
+This way you may pile-up and postpone streamlit widgets rendering (useful to spawn widgets dynamicaly and avoid a blocking behaviour while the app is running its refresh loop).
 
 The tricky part is implement context managment and outputs correctly.
 
@@ -58,7 +58,7 @@ Things become even trickier when having to handle syntaxes such as :
         std.write("column2")
 ```
 But it's basicaly a generalization of the first two examples, except we need to unpack 2 st_outputs after the call of std.columns.
-That's why some st_callables must implement an __iter__ method (to allow unpacking of the outputs).
+That's why some st_object must implement an __iter__ method (to allow unpacking of the outputs) : thus the st_unpackable_callable class
 Each st_output object (c1,c2) must also receive it's value (an actual streamlit column) from the same callable at rendering time.
 That's why every st_callable keeps a list of its ouputs. 
 

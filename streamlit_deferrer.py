@@ -1,6 +1,5 @@
 import streamlit as st
-from components import ImportComponents
-COMPONENTS=ImportComponents()
+from components import COMPONENTS,ATTRIBUTES_MAPPING
 from streamlit.errors import DuplicateWidgetID
 from contextlib import contextmanager
 import jsonpickle as jsp
@@ -10,6 +9,20 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
 
+def instantiate(class_name, *args, **kwargs):
+    cls = globals()[class_name] 
+    return cls(*args, **kwargs)
+
+def isiterable(obj):
+    try:
+        it=iter(obj)
+    except:
+        return False
+    else:
+        if isinstance(obj,str):
+            return False
+        else:
+            return True
 
 class KeyManager:
     def __init__(self):
@@ -25,18 +38,6 @@ class KeyManager:
     def dispose(self,key):
         if key in self.keys:
             self.keys.remove(key)
-
-
-def isiterable(obj):
-    try:
-        it=iter(obj)
-    except:
-        return False
-    else:
-        if isinstance(obj,str):
-            return False
-        else:
-            return True
 
 def st_map(attr):
         try:
@@ -63,7 +64,6 @@ def ctx(context):
             yield None
     else:
         yield None
-
 
 def call(callable):
     results=st_map(callable.name)(*callable.args,**callable.kwargs)
@@ -112,13 +112,23 @@ class st_callable(st_executable):
     def __call__(self,*args,**kwargs):
         self.args=args
         self.kwargs=kwargs
-        if self.name in ['columns','tabs']:
-            return self
-        else:
-            obj=st_output(deferrer=self.deferrer,context=self.context)
-            self.outputs.append(obj)
-            self.deferrer.append(self)
-            return obj
+        obj=st_output(deferrer=self.deferrer,context=self.context)
+        self.outputs.append(obj)
+        self.deferrer.append(self)
+        return obj
+
+class st_unpackable_callable(st_executable):
+    def __init__(self,deferrer,name,context=None):
+        st_executable.__init__(self,deferrer,name,context)
+        self.iter_counter=0
+        self.args=None
+        self.kwargs=None
+        self.outputs=[]
+
+    def __call__(self,*args,**kwargs):
+        self.args=args
+        self.kwargs=kwargs
+        return self
 
     def __iter__(self):
         return self
@@ -149,10 +159,12 @@ class st_output(st_object):
         self.value=None
 
     def __getattr__(self,attr):
-        log.debug("In getattr : "+attr)
-        obj=st_callable(self.deferrer,attr,context=self)
-        self.deferrer.append(obj)
-        return obj
+        if attr in ATTRIBUTES_MAPPING:
+            obj=instantiate(ATTRIBUTES_MAPPING[attr],self.deferrer,attr,context=self)
+            self.deferrer.append(obj)
+            return obj
+        else:
+            raise AttributeError
     
 class st_property(st_executable):
 
@@ -162,8 +174,12 @@ class st_property(st_executable):
         self.deferrer.append(self)
 
     def __getattr__(self,attr):
-        obj=st_callable(self.deferrer,attr,context=self)
-        return obj
+        if attr in ATTRIBUTES_MAPPING:
+            obj=instantiate(ATTRIBUTES_MAPPING[attr],self.deferrer,attr,context=self)
+            return obj
+        else:
+            raise AttributeError
+
 
 
 class st_direct_exec_callable:
@@ -175,7 +191,9 @@ class st_direct_exec_callable:
 
     def __call__(self,*args,**kwargs):
         return st_map(self.name)(*args,**kwargs)
-    
+
+def st_direct_exec_property(deferrer,name,context):
+    return st_map(name)    
 
 class st_one_shot_callable(st_executable):
 
@@ -213,20 +231,11 @@ class st_deferrer:
         return self.key_manager.gen_key()
 
     def __getattr__(self,attr):
-        if attr in ['balloons','snow','experimental_rerun']:
-            obj=st_one_shot_callable(self,attr,context=self.current_context)
+        if attr in ATTRIBUTES_MAPPING:
+            obj=instantiate(ATTRIBUTES_MAPPING[attr],self,attr,context=self.current_context)
             return obj
-        elif attr in ['spinner','progress']:
-            obj=st_direct_exec_callable(self,attr,context=self.current_context)
-            return obj
-        elif attr in ['sidebar']:
-            obj=st_property(self,attr,context=self.current_context)
-            return obj
-        elif attr in ['column_config']:
-            return st.column_config
         else:
-            obj=st_callable(self,attr,context=self.current_context)
-            return obj
+            raise AttributeError
 
     def append(self,obj):
         self.pile.append(obj)
