@@ -2,4 +2,5 @@ streamlit
 streamlit-ace
 matplotlib
 numpy
+json
 #jsonpickle
