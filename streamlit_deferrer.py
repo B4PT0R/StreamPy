@@ -1,8 +1,9 @@
 import streamlit as st
 from components import COMPONENTS,ATTRIBUTES_MAPPING
+# Imports custom components and a mapping of streamlit methods/attributes onto the appropriate deferred version
 from streamlit.errors import DuplicateWidgetID
 from contextlib import contextmanager
-import jsonpickle as jsp
+#import jsonpickle as jsp # optionaly implements serialization of the deferrer's queue (to save queue templates for instance)
 import logging
 import time
 logging.basicConfig(level=logging.WARNING)
@@ -25,6 +26,7 @@ def isiterable(obj):
             return True
 
 class KeyManager:
+# A simple widget key manager
     def __init__(self):
         self.keys=[]
 
@@ -40,6 +42,7 @@ class KeyManager:
             self.keys.remove(key)
 
 def st_map(attr):
+# Maps attributes keys to streamlit built-in or custom components objects
         try:
             return getattr(st,attr)
         except:
@@ -50,11 +53,12 @@ def st_map(attr):
 
 @contextmanager
 def ctx(context):
+# Context manager to open/close streamlit objects as context for others at rendering time
     if not context==None:
         if isinstance(context,(st_callable,st_one_shot_callable)):
             with st_map(context.name)(*context.args,**context.kwargs):
                 yield
-        elif isinstance(context,(st_output,st_property,st_direct_exec_callable)):
+        elif isinstance(context,(st_output,st_property,st_direct_callable)):
             if not context.value is None:
                 with context.value:
                     yield
@@ -65,7 +69,8 @@ def ctx(context):
     else:
         yield None
 
-def call(callable):
+def render(callable):
+# Renders deferred widgets by calling streamlit / third party components and captures outputs if any
     results=st_map(callable.name)(*callable.args,**callable.kwargs)
     if not results is None:
         if isiterable(results):
@@ -76,7 +81,8 @@ def call(callable):
             callable.outputs[0].value=results
 
 class st_object:
-
+# Base class for deferred version of streamlit objects
+# Makes them usable as context managers for other objects
     def __init__(self,deferrer,context=None):
         self.deferrer=deferrer
         self.context=context
@@ -89,21 +95,22 @@ class st_object:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.deferrer.current_context = self.context
 
-class st_executable(st_object):
-
+class st_renderable(st_object):
+# Base class for objects that need rendering
     def __init__(self,deferrer,name,context=None):
         st_object.__init__(self,deferrer,context)
         self.name=name
-        self.has_exec=False
+        self.has_rendered=False
 
-    def exec(self):
+    def render(self):
         with ctx(self.context):
-            call(self)
-        self.has_exec=True
+            render(self)
+        self.has_rendered=True
 
-class st_callable(st_executable):
+class st_callable(st_renderable):
+# For most common callable objects like st.write, st.button, st.text_input...
     def __init__(self,deferrer,name,context=None):
-        st_executable.__init__(self,deferrer,name,context)
+        st_renderable.__init__(self,deferrer,name,context)
         self.iter_counter=0
         self.args=None
         self.kwargs=None
@@ -114,12 +121,13 @@ class st_callable(st_executable):
         self.kwargs=kwargs
         obj=st_output(deferrer=self.deferrer,context=self.context)
         self.outputs.append(obj)
-        self.deferrer.append(self)
+        self.deferrer.append(self) #An object is appended to the pile only when all information required to render it and route its outputs is available
         return obj
 
-class st_unpackable_callable(st_executable):
+class st_unpackable_callable(st_renderable):
+    # For unpackable objects like st.columns, st.tabs...
     def __init__(self,deferrer,name,context=None):
-        st_executable.__init__(self,deferrer,name,context)
+        st_renderable.__init__(self,deferrer,name,context)
         self.iter_counter=0
         self.args=None
         self.kwargs=None
@@ -141,7 +149,7 @@ class st_unpackable_callable(st_executable):
             return obj 
         else:
             self.iter_counter=0
-            self.deferrer.append(self)
+            self.deferrer.append(self) #An object is appended to the pile only when all information required to render it and route its outputs is available
             raise StopIteration   
 
     def __len__(self):
@@ -153,7 +161,7 @@ class st_unpackable_callable(st_executable):
             return 1
 
 class st_output(st_object):
-
+    # Placeholder object for outputs of callables
     def __init__(self,deferrer,context):
         st_object.__init__(self,deferrer,context)
         self.value=None
@@ -166,10 +174,10 @@ class st_output(st_object):
         else:
             raise AttributeError
     
-class st_property(st_executable):
-
+class st_property(st_renderable):
+    # For property-like objects such as st.sidebar
     def __init__(self,deferrer,name,context=None):
-        st_executable.__init__(self,deferrer,name,context)
+        st_renderable.__init__(self,deferrer,name,context)
         self.value=None
         self.deferrer.append(self)
 
@@ -182,23 +190,29 @@ class st_property(st_executable):
 
 
 
-class st_direct_exec_callable:
-
+class st_direct_callable:
+    # Resolves streamlit call directly without appending to the queue
+    # useful for st.spinner, st.progress...
     def __init__(self,deferrer,name,context):
         self.deferrer=deferrer
         self.name=name
         self.context=context
+        self.value=None
 
     def __call__(self,*args,**kwargs):
-        return st_map(self.name)(*args,**kwargs)
+        self.value=st_map(self.name)(*args,**kwargs)
+        return self.value
 
-def st_direct_exec_property(deferrer,name,context):
+def st_direct_property(deferrer,name,context):
+    # Returns a streamlit property directly without appending to the queue
+    # Useful for st.column_config, st.session_state...
     return st_map(name)    
 
-class st_one_shot_callable(st_executable):
-
+class st_one_shot_callable(st_renderable):
+    # For callables that need to be rendered only once
+    # such as st.balloons, st.snow...
     def __init__(self,deferrer,name,context=None):
-        st_executable.__init__(self,deferrer,name,context)
+        st_renderable.__init__(self,deferrer,name,context)
         self.outputs=[]
 
 
@@ -210,12 +224,19 @@ class st_one_shot_callable(st_executable):
         self.deferrer.append(self)
         return obj
 
-    def exec(self):
-        super().exec()
+    def render(self):
+        super().render()
         self.deferrer.remove(self)
 
 class st_deferrer:
-    
+    """
+    Main class, mimicking the streamlit module behaviour in a deferred manner  
+    Wraps streamlit attrs into deferred versions
+    Holds pile/queue of deferred objects
+    Renders all deferred objects in the queue on call to refresh, or streams them one by one in real-time from the pile
+    Keeps the current context required for widget rendering 
+    """
+
     def __init__(self,key_manager=None,mode='static'):
         if key_manager==None:
             self.key_manager=KeyManager()
@@ -224,48 +245,56 @@ class st_deferrer:
         self.mode=mode
         self.queue=[]
         self.pile=[]
-        self.session_state=st.session_state
         self.current_context=None
     
     def gen_key(self):
         return self.key_manager.gen_key()
 
     def __getattr__(self,attr):
+        #instantiate the adequate st_object subtype corresponding to the attribute according to ATTRIBUTES_MAPPING
+        #Refer to the components.py module to see how ATTRIBUTES_MAPPING is defined
         if attr in ATTRIBUTES_MAPPING:
             obj=instantiate(ATTRIBUTES_MAPPING[attr],self,attr,context=self.current_context)
-            return obj
+            return obj #The object itself will deal with its appending to the deferrer's queue once all information required to render it is available (such as call arguments, outputs etc...)
         else:
             raise AttributeError
 
     def append(self,obj):
+        #appends an object to the deferrer's pile
         self.pile.append(obj)
         if self.mode=='streamed':
+            #Makes sure a widget appended to the pile is rendered before continuing
+            #The 'streamed' mode is useful when working with threads
             while len(self.pile)>0:
-                time.sleep(0.005)
+                time.sleep(0.001)
 
     def remove(self,obj):
+        #removes an object from the deferrer's pile/queue (useful for st_one_shot_callable objects)
         if obj in self.pile:
             self.pile.remove(obj)
         if obj in self.queue:
             self.queue.remove(obj)
 
     def stream(self):
+        #renders the first object found in the pile, then moves it to the queue
+        #useful for real-time rendering when working with threads
         if not len(self.pile)==0:
             obj=self.pile.pop(0)
-            if not obj.has_exec:
-                #log.debug("In stream : "+obj.name)
+            if not obj.has_rendered:
                 try:
-                    obj.exec()
+                    obj.render()
                 except DuplicateWidgetID:
+                    #Some widgets take several mainloop turns to be consumed by streamlit and leave screen
+                    #This avoids to attempt rerendering them while they are still active  
                     pass
             self.queue.append(obj)
 
     def refresh(self):
+        #renders every object in the queue (to refresh the whole app display), then renders objects still in the pile, if any.
         for obj in self.queue:
-            if not obj.has_exec:
-                #log.debug("In refresh : "+obj.name)
+            if not obj.has_rendered:
                 try:
-                    obj.exec()
+                    obj.render()
                 except DuplicateWidgetID:
                     pass
         while len(self.pile)>0:
@@ -273,18 +302,23 @@ class st_deferrer:
         
 
     def reset(self):
+        #Supposed to be called at the beginning of the streamlit main app script (understood as the mainloop of the app)
+        #widgets need to be rendered every turn of the mainloop, otherwise these widgets will disappear from the app's display.
+        #This resets all objects in the queue to a non-rendered state so that the next call to refresh will render them all again
         for obj in self.queue:
-            obj.has_exec=False
+            obj.has_rendered=False
 
     def clear(self):
         self.queue=[]
         self.pile=[] 
-
+"""
+    #optionaly implements serialized dumps/loads of the queue
     def dump(self):
         queue=self.queue.copy()
-        encoded_queue=jsp.encode(queue)
-        return encoded_queue
+        serialized_queue=jsp.encode(queue)
+        return serialized_queue
     
     def load(self,serialized_queue):
         decoded_queue=jsp.decode(serialized_queue)
         self.queue=decoded_queue
+"""
