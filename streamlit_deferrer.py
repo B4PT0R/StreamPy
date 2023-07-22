@@ -187,6 +187,10 @@ class st_property(st_renderable):
             return obj
         else:
             raise AttributeError
+        
+    def render(self):
+        with ctx(self.context):
+            self.value=st_map(self.name)
 
 
 

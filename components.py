@@ -94,6 +94,7 @@ ATTRIBUTES_MAPPING = {
     "set_option": "st_callable",
     "set_page_config": "st_callable",
     "session_state": "st_direct_property",
+    "sidebar":"st_property",
     "slider": "st_callable",
     "snow": "st_one_shot_callable",
     "spinner": "st_direct_callable",
