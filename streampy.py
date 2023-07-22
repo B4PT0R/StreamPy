@@ -275,10 +275,7 @@ def make_editor(editor_column):
         if run_butt:
             run_editor_content()
         
-
-#-----------------------------Main app session's logic-------------------------
-if state.user=="":
-    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed") 
+def make_login(): 
     stl.subheader("Welcome to Streampy!")
     con=stl.container()
     with con:
@@ -310,6 +307,12 @@ if state.user=="":
         stl.button("Submit",on_click=on_submit_click)
         stl.warning("This log-in is very basic and provides almost no security. It's only provided as a demo to let you have a personal folder in the StreamPy App. Please don't use an important password or store important/private data in your folder.")
 
+
+
+#-----------------------------Main app session's logic-------------------------
+if state.user=="":
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
+    make_login()
 else:
     if state.show_editor==True:
         stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
