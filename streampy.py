@@ -308,7 +308,7 @@ if state.user=="":
         stl.text_input("Please enter your username (ABCabc123_):",key='username')
         stl.text_input("Please enter your password:",key='password')
         stl.button("Submit",on_click=on_submit_click)
-        stl.warning("This user connexion is very basic and provides almost no security. It's only provided as a demo to let you have a personal folder in the StreamPy App. Please don't use an important password or store important/private data in your folder.")
+        stl.warning("This user connection is very basic and provides almost no security. It's only provided as a demo to let you have a personal folder in the StreamPy App. Please don't use an important password or store important/private data in your folder.")
 
 else:
     if state.show_editor==True:
