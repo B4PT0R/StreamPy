@@ -289,7 +289,8 @@ if state.user=="":
                 if state.username in users:
                     if users[state.username]==state.password:
                         state.user=state.username
-                        state.user_folder="./UserFiles/"+state.user
+                        state.user_folder="./UserFiles/"+state.user+'/'
+                        state.console=Console(st,names=globals(),startup=state.user_folder+'startup.py')
                     else:
                         st.warning("Wrong password.")
                 else:
