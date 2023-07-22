@@ -277,6 +277,7 @@ def make_editor(editor_column):
         
 def make_login(): 
     stl.subheader("Welcome to Streampy!")
+    stl.write("Please enter your credentials. If these are new, a new account will be created automaticly.")
     con=stl.container()
     with con:
         def on_submit_click():
@@ -302,8 +303,8 @@ def make_login():
             else:
                 st.warning("Non-empty username and password required")
 
-        stl.text_input("Please enter your username (ABCabc123_):",key='username')
-        stl.text_input("Please enter your password:",key='password')
+        stl.text_input("Username (ABCabc123_):",key='username')
+        stl.text_input("Password:",key='password')
         stl.button("Submit",on_click=on_submit_click)
         stl.warning("This log-in is very basic and provides almost no security. It's only provided as a demo to let you have a personal folder in the StreamPy App. Please don't use an important password or store important/private data in your folder.")
 
