@@ -171,7 +171,12 @@ def make_input():
             state.index-=1
             state.input_key=km.gen_key()
         stl.button("Next", key='next',on_click=on_next_click)
-
+    if state.run_button:
+        stl.experimental_rerun() 
+        # Not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
+        #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
+        #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
+        #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
 
 
 #Displays the whole console queue
@@ -227,7 +232,6 @@ def make_editor(editor_column):
             state.editor_key=km.gen_key()
             with editor_column:
                 stl.success("File deleted.")
-        #stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
         stl.selectbox('Are you sure you want to delete this file ?',['No','Yes'],on_change=on_yes,index=0,key='sure')  
     elif new_butt:
         edit('buffer')

@@ -5,7 +5,7 @@ StreamPy is a Python 3 interactive interpreter empowered by the rich input/outpu
 
 To use it, first install the required packages via pip.
 ```bash
-$ pip install streamlit, streamlit-ace, jsonpickle
+$ pip install streamlit, streamlit-ace
 ```
 
 Then copy [this repository](https://github.com/B4PT0R/StreamPy) to a local folder, cd to this folder and run :
@@ -18,7 +18,9 @@ Usage is pretty straightforward. Just type your python commands/scripts in the i
 
 Feel free to use Streamlit commands in your scripts with preloaded prefix 'st', as you would normaly do in a Streamlit script. 
 The widgets will be outputted automaticly at the right place in the interactive console queue.
-No need to import streamlit in your scripts, the 'st' prefix is actualy a special helper class instance that will take care of dealing with streamlit calls to render them adequetely in the console.
+
+No need to import streamlit in your scripts, the 'st' prefix is already preloaded in the console.
+(Importing streamlit at all should be avoided for technical reasons, as it would break the app's functionnalities)
 
 As an example, try to run the following snippet in the console, demonstrating the basic features of streamlit:
 ```python
@@ -50,20 +52,25 @@ my_text_input_state=st.session_state[my_text_input_key]
 ``` 
 Apart from this, it's just normal Python and Streamlit commands!
 
-Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line).
+Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line and use the .value attribute to access widgets outputs).
 
 In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
-The Restart Session button will reinitialize the python session to its startup state.
+The 'Restart Session' button will reinitialize the python session to its startup state.
 
-Worth being noted: The python session runs the startup.py script at startup. Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
+Worth being noted: The python session runs the startup.py script (found in the /UserFiles folder) at startup. Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
 
 ---Note for developers---
 
-StreamPy features a special streamlit_deferrer module I designed which is crucial to manage interactivity and widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when desired. This allows handling (almost! Working on it...) all Streamlit functions and syntaxes in deferred manner for a seamless integration in the StreamPy interactive console. This is what happens under the hood when you run streamlit commands in the console using the 'st' prefix. 
-The 'st' prefix preloaded in the console is a st_deferrer class instance from the streamlit_deferrer module, not streamlit module itself. So avoid importing streamlit as st or it will overwrite the prefix with normal streamlit module and break the console's functionalities.
+StreamPy features a special streamlit_deferrer module I designed which is crucial to manage interactivity and widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when appropriate. This allows running (almost...) all Streamlit functions and syntaxes interactively for a seamless integration in the StreamPy interactive console. This is what happens under the hood when you run streamlit commands in the console using the 'st' prefix. 
+The 'st' prefix preloaded in the console is a st_deferrer class instance from the streamlit_deferrer module, not streamlit module itself. 
+Beware that importing streamlit as st in your scripts will overwrite the prefix with normal streamlit module and break the console's functionalities.
 
-StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4 / Claude2) with coding capabilities, that will have the session in context, be able to interact with the user, show/run snippets, and use streamlit widgets profitably for richer output. 
+For more details on how it works, check the streamlit_deferrer_explanation.md file in the repo or the module's code directly.
 
-The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes just won't work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
+The project is open source with MIT license. You can therefore use it and tweak it in any way you like provided that you credit me for the work done! 
+
+StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4) with coding capabilities, that will have the session in context (including user inputs in the console as well as feedbacks from the interpreter), will be able to run snippets, interact with the editor and use streamlit widgets profitably for richer output and interactivity. This python-specialized LLM agent is almost finished and working fine, it just needed this kind of interactive interface to leverage its full potential, so stay tuned !
+
+The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes may not work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
 
 Happy testing!
