@@ -6,11 +6,21 @@ import streamlit as stl
 from streampy_console import Console
 from streamlit_ace import st_ace
 from streamlit_deferrer import st_deferrer,KeyManager
+import json
+import shutil
 import os
 
 #-------------Initialize session_state variables--------------
 
 state=stl.session_state #shortcut
+
+#Username
+if 'user' not in state:
+    state.user=""
+
+#User folder
+if 'user' not in state:
+    state.user_folder=""
 
 #Useful to generate unique keys for widgets
 if 'key_manager' not in state:
@@ -25,7 +35,7 @@ st.reset()
 
 #Declares the python console in which the code will be run.
 if 'console' not in state:
-    state.console = Console(st,names=globals(),startup='./UserFiles/startup.py')
+    state.console = None
 console=state.console
 
 #the file currently open in the editor
@@ -72,7 +82,7 @@ if 'index' not in state:
 
 #Save the content of the editor as... 
 def save_as(name):
-    with open('./UserFiles/'+name,'w') as f:
+    with open(state.user_folder++name,'w') as f:
         f.write(state.file_content)
     state.open_file=name
 
@@ -94,10 +104,10 @@ def edit(file):
     state.show_editor=True
     state.open_file=file
     if not file=='buffer':
-        if not os.path.exists('./UserFiles/'+file):
-            with open('./UserFiles/'+file,'w') as f:
+        if not os.path.exists(state.user_folder+file):
+            with open(state.user_folder+file,'w') as f:
                 pass
-        with open('./UserFiles/'+state.open_file,'r') as f:
+        with open(state.user_folder+state.open_file,'r') as f:
             state.file_content=f.read()
     else:
         state.file_content=''
@@ -105,7 +115,7 @@ def edit(file):
 #Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=Console(st,names=globals(),startup='./UserFiles/startup.py')
+    state.console=Console(st,names=globals(),startup=state.user_folder+'startup.py')
 
 
 #Clears the console's queue
@@ -223,11 +233,11 @@ def make_editor(editor_column):
             if not state.file_name==' ':
                 edit(state.file_name)
         #stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        basenames = [' ']+[os.path.basename(f) for f in os.listdir('./UserFiles/')]
+        basenames = [' ']+[os.path.basename(f) for f in os.listdir(state.user_folder)]
         stl.selectbox('Select a file:',basenames,on_change=on_file_name_change,index=0,key='file_name')
     elif delete_butt:
         def on_yes():
-            os.remove('./UserFiles/'+state.open_file)
+            os.remove(state.user_folder+state.open_file)
             edit('buffer')
             state.editor_key=km.gen_key()
             with editor_column:
@@ -267,18 +277,50 @@ def make_editor(editor_column):
         
 
 #-----------------------------Main app session's logic-------------------------
-if state.show_editor==True:
-    stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
-    make_menu()
-    console_column,editor_column=stl.columns(2)
-    with console_column:
-        make_console()
-    with editor_column:
-        make_editor(editor_column)
+if state.user=="":
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed") 
+    stl.subheader("Welcome to Streampy!")
+    con=stl.container()
+    with con:
+        def on_submit_click():
+            if not state.username=="" and not state.password=="":
+                with open("users.json",'r') as f:
+                    users=json.load(f)
+                if state.username in users:
+                    if users[state.username]==state.password:
+                        state.user=state.username
+                        state.user_folder="./UserFiles/"+state.user
+                    else:
+                        st.warning("Wrong password.")
+                else:
+                    users[state.username]=state.password
+                    with open("users.json",'w') as f:
+                        json.dump(users,f)
+                    state.user=state.username
+                    os.mkdir("./UserFiles/"+state.user)
+                    state.user_folder="./UserFiles/"+state.user+"/"
+                    shutil.copy("./startup.py",state.user_folder+"startup.py")
+                    state.console=Console(st,names=globals(),startup=state.user_folder+'startup.py')
+            else:
+                st.warning("Non-empty username and password required")
+
+        stl.text_input("Please enter your username (ABCabc123_):",key='username')
+        stl.text_input("Please enter your password:",key='password')
+        stl.button("Submit",on_click=on_submit_click)
+
 else:
-    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
-    make_menu()
-    make_console()
+    if state.show_editor==True:
+        stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
+        make_menu()
+        console_column,editor_column=stl.columns(2)
+        with console_column:
+            make_console()
+        with editor_column:
+            make_editor(editor_column)
+    else:
+        stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
+        make_menu()
+        make_console()
 
 
 
