@@ -41,6 +41,7 @@ Type some text and click the button to see what happens.
 Note that, contrary to normal Streamlit syntax, txt is not refering directly to the text content string of the text_input widget, but is rather an object placeholder for the (future!) content of this text_input. It will be actualized in real-time if the content changes, and you may retrieve its value at any time by accessing its 'value' property, as in the snippet.
 
 Even though the Python interpreter maintains its session state, you may want to use st.session_state as you would in a Streamlit script.
+
 To ease widget's keys managment, feel free to use the implemented key generator:
 ```python
 my_text_input_key=st.gen_key()
