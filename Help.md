@@ -3,7 +3,7 @@ It is meant to upgrade the classic terminal-based Python REPL by incorporating m
 
 Usage is pretty straightforward. Just type your python commands/scripts in the input cell and click "Run" to get the results.
 
-The main feature of StreamPy is that you can use Streamlit commands as you would normaly do in a Streamlit script. 
+The main feature of StreamPy is the possibility to run Streamlit commands in the input cell as you would normaly do in a Streamlit script. 
 The widgets will be outputted dynamicaly in the interactive console queue.
 
 No need to import streamlit, the 'st' prefix preloaded in the console namespace is a special helper object that will take care of dealing with Streamlit calls adequately. Beware that importing streamlit as 'st' would overwrite this object and break the app's functionality.
