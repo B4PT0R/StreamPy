@@ -18,7 +18,7 @@ state=stl.session_state
 
 #root folder's path of the app 
 if 'root' not in state:
-    state.root=os.getcwd()
+    state.root=os.path.abspath(".")
 
 #load config.json file
 if 'config' not in state:
@@ -302,7 +302,7 @@ def make_login():
                         state.user=state.username
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
                     else:
-                        st.warning("Wrong password.")
+                        stl.warning("Wrong password.")
                 else:
                     users[state.username]=gen_lock(state.password,30)
                     with open(os.path.join(state.root,"users.json"),'w') as f:
@@ -312,7 +312,7 @@ def make_login():
                     state.user_folder=os.path.join(state.root,"UserFiles",state.user)
                     shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
             else:
-                st.warning("Non-empty username and password required")
+                stl.warning("Non-empty username and password required")
 
         stl.text_input("Username (ABCabc123_):",key='username')
         stl.text_input("Password:",type="password",key='password')
@@ -325,7 +325,6 @@ def make_login():
 if state.user=="":
     #Ask for credentials
     stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
-    st.write(state.root)
     make_login()
 else:
     #Initialize the user's session
