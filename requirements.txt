@@ -3,4 +3,9 @@ streamlit-ace
 matplotlib
 numpy
 pandas
+graphviz
+altair
+plotly
+bokeh
+pydeck
 #jsonpickle
