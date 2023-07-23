@@ -15,7 +15,8 @@ $ streamlit run streampy.py
 ```
 A local web-server will launch and the app will open in your web-browser.
 
-Alternatively, the app is available as a [test version online](https://streampy.streamlit.app/) if you wanna try.
+Alternatively, the app is available as a test version online if you wanna try:
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streampy.streamlit.app/)
 
 Usage is pretty straightforward. Just type your python commands/scripts in the input cell and click "Run" to get the results.
 
