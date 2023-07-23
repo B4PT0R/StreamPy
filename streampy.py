@@ -309,7 +309,8 @@ def make_login():
                         with open(os.path.join(state.root,"users.json"),'w') as f:
                             json.dump(users,f)
                         state.user=state.username
-                        os.mkdir(os.path.join(state.root,"UserFiles",state.user))
+                        if not os.path.exists(os.path.join(state.root,"UserFiles",state.user)):
+                            os.mkdir(os.path.join(state.root,"UserFiles",state.user))
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
                         shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
                 except Exception as e:
