@@ -21,8 +21,7 @@ Usage is pretty straightforward. Just type your python commands/scripts in the i
 Feel free to use Streamlit commands in your scripts with preloaded prefix 'st', as you would normaly do in a Streamlit script. 
 The widgets will be outputted automaticly at the right place in the interactive console queue.
 
-No need to import streamlit in your scripts, the 'st' prefix is already preloaded in the console.
-(Importing streamlit at all should be avoided for technical reasons, as it would break the app's functionnalities)
+No need to import streamlit in your scripts, the 'st' prefix preloaded in the console is a special helper object that will take care of dealing with streamlit calls adequately. Importing streamlit as 'st' would overwrite this object and break the app's functionning.
 
 As an example, try to run the following snippet in the console, demonstrating the basic features of streamlit:
 ```python
@@ -70,9 +69,7 @@ Beware that importing streamlit as st in your scripts will overwrite the prefix 
 
 For more details on how it works, check the streamlit_deferrer_explanation.md file in the repo or the module's code directly.
 
-The project is open source with MIT license. You can therefore use it and tweak it in any way you like provided that you credit me for the work done! 
-
-StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4) with coding capabilities, that will have the session in context (including user inputs in the console as well as feedbacks from the interpreter), will be able to run snippets, interact with the editor and use streamlit widgets profitably for richer output and interactivity. This python-specialized LLM agent is almost finished and working fine, it just needed this kind of interactive interface to leverage its full potential, so stay tuned !
+StreamPy is only the first part of a larger project. My goal is to include an LLM agent (GPT4) with coding capabilities, that will have the session in context (including user inputs in the console as well as feedbacks from the interpreter), will be able to run code, interact with the editor and use streamlit widgets profitably for richer output and interactivity. This python-specialized LLM agent is almost finished and working fine, it just needed this kind of interactive interface to leverage its full potential, so stay tuned !
 
 The project is mostly working but still an early prototype and have not yet been thoroughly tested. Some widgets/syntaxes may not work properly (most will) and you may run into errors or undesired behaviour. If you want to report a bug or feel like contributing to the project, feel free to check the [GitHub repository](https://github.com/B4PT0R/StreamPy) or reach me out directly at bferrand.maths@gmail.com. Any contribution to the project will be met with enthusiasm and gratitude. :)
 

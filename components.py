@@ -1,27 +1,33 @@
-#Allows for easier implementation of third party components in the streamlit_deferrer module
+import json
+
+#components.json allows for easier implementation of third party components in the streamlit_deferrer module
 
 """
-Structure of ComponentsDict : 
-    {
-        component_key : {"module":module_name,"component":component_name,"type":st_object_subtype},
-        ...
-    }
-"""
-
-ComponentsDict={
-    "ace":{"module":"streamlit_ace","component":"st_ace","type":"st_callable"}
+Structure of components.json : 
+{
+    component_key : {"module":module_name,"component":component_name,"type":st_object_subtype},
     #add your components here
+    ...
 }
+"""
 
-#This function will import the components from their modules and return a COMPONENTS dictionary allowing to access the corresponding objects from their keys
-def ImportComponents():
+#Loads the components dictionary from components.json
+def load_components_dict():
+    with open("components.json",'r') as f:
+        ComponentsDict=json.load(f)
+    return ComponentsDict
+
+
+#This function imports the components from their modules and return a COMPONENTS dictionary allowing to access the corresponding objects by their keys
+def ImportComponents(ComponentsDict):
     COMPONENTS={}
     for key in ComponentsDict:
         module = __import__(ComponentsDict[key]["module"], globals(), locals(), [ComponentsDict[key]["component"]], 0)
         COMPONENTS[key] = getattr(module, ComponentsDict[key]["component"])
     return COMPONENTS
 
-COMPONENTS=ImportComponents()
+ComponentsDict=load_components_dict()
+COMPONENTS=ImportComponents(ComponentsDict)
 
 #This dictionary maps the built-in streamlit attributes to the adequate st_object subtype used by the deferrer
 ATTRIBUTES_MAPPING = {
