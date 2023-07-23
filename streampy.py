@@ -325,6 +325,7 @@ def make_login():
 if state.user=="":
     #Ask for credentials
     stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
+    st.write(state.root)
     make_login()
 else:
     #Initialize the user's session
