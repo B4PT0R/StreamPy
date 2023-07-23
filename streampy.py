@@ -295,22 +295,25 @@ def make_login():
     with con:
         def on_submit_click():
             if not state.username=="" and not state.password=="":
-                with open(os.path.join(state.root,"users.json"),'r') as f:
-                    users=json.load(f)
-                if state.username in users:
-                    if check_lock(state.password,users[state.username]):
-                        state.user=state.username
-                        state.user_folder=os.path.join(state.root,"UserFiles",state.user)
+                try:
+                    with open(os.path.join(state.root,"users.json"),'r') as f:
+                        users=json.load(f)
+                    if state.username in users:
+                        if check_lock(state.password,users[state.username]):
+                            state.user=state.username
+                            state.user_folder=os.path.join(state.root,"UserFiles",state.user)
+                        else:
+                            stl.warning("Wrong password.")
                     else:
-                        stl.warning("Wrong password.")
-                else:
-                    users[state.username]=gen_lock(state.password,30)
-                    with open(os.path.join(state.root,"users.json"),'w') as f:
-                        json.dump(users,f)
-                    state.user=state.username
-                    os.mkdir(os.path.join(state.root,"UserFiles",state.user))
-                    state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                    shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
+                        users[state.username]=gen_lock(state.password,30)
+                        with open(os.path.join(state.root,"users.json"),'w') as f:
+                            json.dump(users,f)
+                        state.user=state.username
+                        os.mkdir(os.path.join(state.root,"UserFiles",state.user))
+                        state.user_folder=os.path.join(state.root,"UserFiles",state.user)
+                        shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
+                except Exception as e:
+                    stl.warning("Something went wrong, please try again.")    
             else:
                 stl.warning("Non-empty username and password required")
 
