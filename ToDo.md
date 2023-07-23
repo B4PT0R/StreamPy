@@ -7,4 +7,6 @@ Most basic widgets/commands/syntaxes already work, but there may be issues to ad
 
 -Improve the editor functionalities (open several files in tabs)
 
--Improve robustness via adequate exception handling 
+-Improve robustness via adequate exception handling
+
+-Find a way to intercept Python's demand for input in stdin via a text_input widget 
