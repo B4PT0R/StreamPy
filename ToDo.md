@@ -6,3 +6,5 @@ Most basic widgets/commands/syntaxes already work, but there may be issues to ad
 -Implement automatic key attribution for compatible widgets in case the user doesn't provide any (avoid weird widget's behavior)
 
 -Improve the editor functionalities (open several files in tabs)
+
+-Improve robustness via adequate exception handling 

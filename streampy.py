@@ -13,15 +13,24 @@ import os
 
 #-------------Initialize session_state variables--------------
 
-state=stl.session_state #shortcut
+#shortcut
+state=stl.session_state
 
 #root folder's path of the app 
 if 'root' not in state:
     state.root=os.getcwd()
 
+#load config.json file
+if 'config' not in state:
+    with open(os.path.join(state.root,'config.json'),'r') as f:
+        state.config=json.load(f)
+
 #Username
 if 'user' not in state:
-    state.user=""
+    if state.config["MODE"]=='web':
+        state.user=""
+    else:
+        state.user="DefaultUser"
 
 #User folder
 if 'user_folder' not in state:
@@ -41,7 +50,6 @@ st.reset()
 #Declares the python console in which the code will be run.
 if 'console' not in state:
     state.console = None
-console=state.console
 
 #the file currently open in the editor
 if 'open_file' not in state:
@@ -101,7 +109,7 @@ def close_editor():
 def run_editor_content():
     code=state.file_content
     with state.console_queue:
-        console.run(code)
+        state.console.run(code)
     stl.experimental_rerun()
 
 #Opens a new buffer or file in the editor
@@ -131,7 +139,7 @@ def clear():
 def process(code):
     if not (code=="" or code==None):
         with state.console_queue:
-            console.run(code)
+            state.console.run(code)
 
 #Sets the sidebar menu
 def make_menu():
@@ -157,7 +165,7 @@ def make_welcome():
 
 #Sets the input cell part 
 def make_input():
-    n=len(console.inputs)
+    n=len(state.console.inputs)
     if state.index<=0:
         state.index=0
     elif state.index>n:
@@ -166,7 +174,7 @@ def make_input():
     if n==0 or state.index==0:
         state.input_code=""
     else:   
-        state.input_code=console.inputs[n-state.index]
+        state.input_code=state.console.inputs[n-state.index]
     
     state.output_code = st_ace(value=state.input_code, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
     a,_,b,_,c=stl.columns([1,3,1,3,1],gap='small')
@@ -293,7 +301,6 @@ def make_login():
                     if check_lock(state.password,users[state.username]):
                         state.user=state.username
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                        state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
                     else:
                         st.warning("Wrong password.")
                 else:
@@ -304,7 +311,6 @@ def make_login():
                     os.mkdir(os.path.join(state.root,"UserFiles",state.user))
                     state.user_folder=os.path.join(state.root,"UserFiles",state.user)
                     shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
-                    state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
             else:
                 st.warning("Non-empty username and password required")
 
@@ -317,9 +323,17 @@ def make_login():
 
 #-----------------------------Main app session's logic-------------------------
 if state.user=="":
+    #Ask for credentials
     stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
     make_login()
 else:
+    #Initialize the user's session
+    if state.user_folder=="":
+        state.user_folder=os.path.join(state.root,"UserFiles",state.user)
+    if state.console is None:
+        state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
+    
+    #Show the app's main page
     if state.show_editor==True:
         stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
         make_menu()
@@ -332,10 +346,3 @@ else:
         stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
         make_menu()
         make_console()
-
-
-
-
-
-
-
