@@ -249,7 +249,7 @@ def make_editor(editor_column):
         stl.selectbox('Select a file:',basenames,on_change=on_file_name_change,index=0,key='file_name')
     elif delete_butt:
         def on_yes():
-            os.remove(state.user_folder+state.open_file)
+            os.remove(os.path.join(state.user_folder,state.open_file))
             edit('buffer')
             state.editor_key=km.gen_key()
             with editor_column:
