@@ -8,4 +8,6 @@ altair
 plotly
 bokeh
 pydeck
+scipy
+sympy
 #jsonpickle
