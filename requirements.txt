@@ -10,4 +10,5 @@ bokeh
 pydeck
 scipy
 sympy
+vega-datasets
 #jsonpickle
