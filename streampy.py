@@ -316,13 +316,15 @@ def make_login():
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
                         shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
                 except Exception as e:
-                    stl.warning("Something went wrong, please try again.")    
+                    #stl.exception(exception=e)
+                    stl.warning("Something went wrong. Please try again.")    
             else:
                 stl.warning("Non-empty username and password required")
 
-        stl.text_input("Username (ABCabc123_):",key='username')
-        stl.text_input("Password:",type="password",key='password')
-        stl.button("Submit",on_click=on_submit_click)
+        with stl.form("login",clear_on_submit=True):
+            stl.text_input("Username (ABCabc123_):",key='username')
+            stl.text_input("Password:",type="password",key='password')
+            stl.form_submit_button("Submit",on_click=on_submit_click)
         stl.warning("This log-in is very basic and provides little security. It is only meant to let you have a personal folder in the StreamPy app so that you may test it comfortably. Your password is protected (it is stored strongly encrypted) but the content of your folder is not. A malvolent user could sneak in and access this content. Please don't store sensitive data in your folder!")
         stl.warning("The app is still a work in progress and will be rebuilt frequently. As a result, files stored in your folder will be lost. It is therefore recommended that you copy/paste your scripts to local files if you want to save them in the long run. Sorry for the inconvenience.")
 
@@ -339,6 +341,7 @@ else:
     if state.console is None:
         state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
     
+    #Places the interpreter's cwd in the user's folder
     os.chdir(state.user_folder)
 
     #Show the app's main page
