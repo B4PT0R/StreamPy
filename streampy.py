@@ -339,6 +339,8 @@ else:
     if state.console is None:
         state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
     
+    os.chdir(state.user_folder)
+
     #Show the app's main page
     if state.show_editor==True:
         stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
