@@ -16,18 +16,20 @@ import os
 #shortcut
 state=stl.session_state
 
+#Useful to quickly switch between web (with user authentication) and local mode (without).
+if 'mode' not in state:
+    state.mode="web"
+
 #root folder's path of the app 
 if 'root' not in state:
-    state.root=os.path.abspath(".")
-
-#load config.json file
-if 'config' not in state:
-    with open(os.path.join(state.root,'config.json'),'r') as f:
-        state.config=json.load(f)
+    if state.mode=="web":
+        state.root="/app/streampy"
+    else:
+        state.root=os.path.abspath(".")
 
 #Username
 if 'user' not in state:
-    if state.config["MODE"]=='web':
+    if state.mode=='web':
         state.user=""
     else:
         state.user="DefaultUser"
@@ -47,7 +49,7 @@ if 'deferrer' not in state:
 st=state.deferrer
 st.reset()
 
-#Declares the python console in which the code will be run.
+#the python console in which the code will be run. Initialized at user login.
 if 'console' not in state:
     state.console = None
 

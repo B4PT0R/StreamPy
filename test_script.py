@@ -57,3 +57,12 @@ st.warning('Warning message')
 st.info('Info message')
 st.success('Success message')
 st.exception("Exception")
+
+with st.spinner(text='In progress'):
+    time.sleep(3)
+    st.success('Done')
+
+# Show and update progress bar
+bar = st.progress(50)
+time.sleep(3)
+bar.progress(100)
