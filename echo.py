@@ -1,3 +1,8 @@
+"""
+Adaptation of Streamlit's echo module to fit StreamPy's interactive environment
+All credits to Streamlit developers.
+"""
+
 import ast
 import contextlib
 import textwrap
@@ -23,11 +28,12 @@ class echo_generator:
             frame = traceback.extract_stack()[-3]
             filename, start_line = frame.filename, frame.lineno
 
-            # Read the file containing the source code of the echoed statement.
             if self.source_code is None:
+                # Read the file containing the source code of the echoed statement.
                 with source_util.open_python_file(filename) as source_file:
                     source_lines = source_file.readlines()
             else:
+                # Read the passed source code directly
                 source_lines=self.source_code.splitlines(True)
 
             # Use ast to parse the Python file and find the code block to display
