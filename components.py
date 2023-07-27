@@ -59,7 +59,7 @@ ATTRIBUTES_MAPPING = {
     "deck_gl_chart": "st_callable",
     "deck_gl_json_chart": "st_callable",  
     "download_button": "st_one_shot_callable",
-    "echo": "st_direct_callable",
+    #"echo": This is handled in a special way
     "empty": "st_callable", 
     "error": "st_callable",
     "exception": "st_callable",

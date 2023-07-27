@@ -1,5 +1,6 @@
 import streamlit as st
 from components import COMPONENTS,ATTRIBUTES_MAPPING
+from echo import echo_generator
 # Imports custom components and a mapping of streamlit methods/attributes onto the appropriate deferred version
 from streamlit.errors import DuplicateWidgetID
 from contextlib import contextmanager
@@ -206,6 +207,8 @@ class st_direct_callable:
     def __call__(self,*args,**kwargs):
         self.value=st_map(self.name)(*args,**kwargs)
         return self.value
+    
+
 
 def st_direct_property(deferrer,name,context):
     # Returns a streamlit property directly without appending to the queue
@@ -250,6 +253,7 @@ class st_deferrer:
         self.queue=[]
         self.pile=[]
         self.current_context=None
+        self.echo=echo_generator(self)
     
     def gen_key(self):
         return self.key_manager.gen_key()

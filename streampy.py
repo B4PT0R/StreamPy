@@ -18,14 +18,14 @@ state=stl.session_state
 
 #Useful to quickly switch between web (with user authentication) and local mode (without).
 if 'mode' not in state:
-    state.mode="web"
+    state.mode="local"
 
 #root folder's path of the app 
 if 'root' not in state:
     if state.mode=="web":
         state.root="/app/streampy"
     else:
-        state.root=os.path.abspath(".")
+        state.root="/home/baptiste/Dropbox/python/GitHub/StreamPy"
 
 #Username
 if 'user' not in state:

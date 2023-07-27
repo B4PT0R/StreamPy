@@ -9,4 +9,4 @@ Most basic widgets/commands/syntaxes already work, but there may be issues to ad
 
 -Improve robustness via adequate exception handling
 
--Find a way to intercept whenever the Python's interperter is waiting for an input in stdin via a text_input widget (would allow to use 'input' command seamlessly) 
+-Find a way to intercept whenever the Python's interperter is waiting for an input in stdin via a text_input widget (would allow to use 'input' command seamlessly, or to run scripts requiring inputs in stdin...)

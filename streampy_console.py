@@ -6,6 +6,7 @@ from queue import Queue
 import sys
 import time
 from contextlib import contextmanager
+from echo import echo_generator
 
 @contextmanager
 def redirect_outputs(target):
@@ -108,6 +109,7 @@ class Console(InteractiveConsole):
 
     def run(self,source):
         self.inputs.append(source)
+        self.deferrer.echo=echo_generator(self.deferrer,source)
         self.results.append([])
         R=Thread(target=self.run_thread,args=(source,))
         add_script_run_ctx(R)
@@ -123,6 +125,7 @@ class Console(InteractiveConsole):
         R.join()
         L.join()
         self.deferrer.mode='static'
+        self.deferrer.echo=echo_generator(self.deferrer)
 
     def get_result(self):
         return '\n'.join(self.results[-1])
