@@ -124,7 +124,7 @@ class Console(InteractiveConsole):
         self.deferrer.mode='streamed' #passes the deferrer in streamed mode (pauses code execution in the first thread until the deferrer's pile is emptied by the loop below)
         R.start() # start the run thread
         L.start() # start the listen thread
-        while self.is_running or len(self.deferrer.pile)>0: # streams piled widgets in the deferrer's pile in real time
+        while self.is_running or len(self.deferrer.pile)>0: # streams (=renders) piled widgets from the deferrer's pile in real time
             self.deferrer.stream()
             time.sleep(0.001)
         R.join()
