@@ -341,8 +341,9 @@ else:
     if state.console is None:
         state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
     
-    #Places the interpreter's cwd in the user's folder
-    os.chdir(state.user_folder)
+    #Forces the interpreter's cwd to the user's folder
+    if state.mode=="web":
+        os.chdir(state.user_folder)
 
     #Show the app's main page
     if state.show_editor==True:
