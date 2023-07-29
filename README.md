@@ -107,7 +107,7 @@ Worth being noted: The python session runs a startup.py script at startup. You c
 
 ---Note for developers---
 
-StreamPy features a special streamlit_deferrer module which is crucial to manage interactivity and widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when appropriate. This allows to deal with (almost...) all Streamlit functions and syntaxes interactively for a seamless integration in the StreamPy interactive console. 
+StreamPy features a special streamlit_deferrer module which is crucial to manage dynamic widget rendering in the console queue. It functions by encoding streamlit calls, piling them to a queue, and render the queue (which means actualy executing the corresponding streamlit commands) when appropriate. This allows to deal with (almost...) all Streamlit functions and syntaxes interactively for a seamless integration in the StreamPy interactive console. 
 
 For more details on how it works, check the streamlit_deferrer_explanation.md file in the repo and the module's code.
 
