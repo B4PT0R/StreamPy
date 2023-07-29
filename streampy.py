@@ -2,6 +2,10 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
+import os, sys
+_root_path_=os.path.dirname(os.path.abspath(__file__))
+if not _root_path_ in sys.path:
+    sys.path.append(_root_path_)
 from crypto import gen_lock, check_lock
 import streamlit as stl
 from streampy_console import Console
@@ -9,7 +13,7 @@ from streamlit_ace import st_ace
 from streamlit_deferrer import st_deferrer,KeyManager
 import json
 import shutil
-import os
+
 
 #-------------Initialize session_state variables--------------
 
@@ -18,7 +22,7 @@ state=stl.session_state
 
 #root folder's path of the app 
 if 'root' not in state:
-    state.root=os.path.dirname(os.path.abspath(__file__))
+    state.root=_root_path_
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
@@ -130,8 +134,7 @@ def edit(file):
 #Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,'startup.py'))
-
+    state.console=Console(st,names=globals(), startup=os.path.join(state.user_folder,"startup.py"))
 
 #Clears the console's queue
 def clear():
@@ -313,7 +316,6 @@ def make_login():
                         state.user=state.username
                         os.mkdir(os.path.join(state.root,"UserFiles",state.user))
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                        os.chdir(state.user_folder)
                         shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
                 except Exception as e:
                     #stl.exception(exception=e)
@@ -340,7 +342,7 @@ else:
         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
         os.chdir(state.user_folder)
     if state.console is None:
-        state.console=Console(st,names=globals(),startup=os.path.join(state.user_folder,"startup.py"))
+        state.console=Console(st,names=globals(), startup=os.path.join(state.user_folder,"startup.py"))
     
     #Forces the interpreter's cwd to the user's folder
     if state.mode=="web":

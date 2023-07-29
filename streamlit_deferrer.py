@@ -6,7 +6,6 @@ from streamlit.errors import DuplicateWidgetID
 from contextlib import contextmanager
 #import jsonpickle as jsp # optionaly implements serialization of the deferrer's queue (to save queue templates for instance)
 import logging
-import time
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
@@ -174,12 +173,14 @@ class st_output(st_object):
             return obj
         else:
             raise AttributeError
-    
+
+
 class st_property(st_renderable):
     # For property-like objects such as st.sidebar
     def __init__(self,deferrer,name,context=None):
         st_renderable.__init__(self,deferrer,name,context)
         self.value=None
+        self.item=None
         self.deferrer.append(self)
 
     def __getattr__(self,attr):
@@ -188,7 +189,7 @@ class st_property(st_renderable):
             return obj
         else:
             raise AttributeError
-        
+
     def render(self):
         with ctx(self.context):
             self.value=st_map(self.name)
@@ -234,6 +235,7 @@ class st_one_shot_callable(st_renderable):
     def render(self):
         super().render()
         self.deferrer.remove(self)
+    
 
 class st_deferrer:
     """
@@ -271,10 +273,7 @@ class st_deferrer:
         #appends an object to the deferrer's pile
         self.pile.append(obj)
         if self.mode=='streamed':
-            #Makes sure a widget appended to the pile is rendered before continuing
-            #The 'streamed' mode is useful when working with threads
-            while len(self.pile)>0:
-                time.sleep(0.001)
+            self.stream()
 
     def remove(self,obj):
         #removes an object from the deferrer's pile/queue (useful for st_one_shot_callable objects)
@@ -307,7 +306,7 @@ class st_deferrer:
                     pass
         while len(self.pile)>0:
             self.stream()
-        
+            
 
     def reset(self):
         #Supposed to be called at the beginning of the streamlit main app script (understood as the mainloop of the app)

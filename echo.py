@@ -57,14 +57,16 @@ class echo_generator:
 
             code_string = textwrap.dedent("".join(lines_to_display))
 
-            # Run the echoed code...
-            yield
-
-            # And draw the code string to the app!
+            # draw the code string to the app.
             if code_location=="above":
                 with placeholder:
                     self.deferrer.code(code_string)
-            else:
+
+            # Run the echoed code...
+            yield
+
+            
+            if not code_location=="above":
                 self.deferrer.code(code_string)
 
         except Exception as err:
