@@ -10,6 +10,23 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
 log.setLevel(logging.DEBUG)
 
+def split_dict(mydict,keys):
+    d1={}
+    d2={}
+    for key in mydict:
+        if key in keys:
+            d1[key]=mydict[key]
+        else:
+            d2[key]=mydict[key]
+    return d1,d2
+
+def inspect_key(name,key):
+    from inspect import getfullargspec
+    try:
+        return key in getfullargspec(st_map(name))[0]
+    except:
+        return False
+
 def instantiate(class_name, *args, **kwargs):
     cls = globals()[class_name] 
     return cls(*args, **kwargs)
@@ -101,6 +118,8 @@ class st_renderable(st_object):
         st_object.__init__(self,deferrer,context)
         self.name=name
         self.has_rendered=False
+        self.tag=name
+        self.key=None
 
     def render(self):
         with ctx(self.context):
@@ -118,6 +137,16 @@ class st_callable(st_renderable):
 
     def __call__(self,*args,**kwargs):
         self.args=args
+        if 'tag' in kwargs:
+            d,kwargs=split_dict(kwargs,['tag'])
+            self.tag=d['tag']
+        if inspect_key(self.name,'key'):
+            if not 'key' in kwargs:
+                key=self.deferrer.gen_key()
+                self.key=key
+                kwargs.update({'key':key})
+            else:
+                self.key=kwargs['key']
         self.kwargs=kwargs
         obj=st_output(deferrer=self.deferrer,context=self.context)
         self.outputs.append(obj)
@@ -135,6 +164,16 @@ class st_unpackable_callable(st_renderable):
 
     def __call__(self,*args,**kwargs):
         self.args=args
+        if 'tag' in kwargs:
+            d,kwargs=split_dict(kwargs,['tag'])
+            self.tag=d['tag']
+        if inspect_key(self.name,'key'):
+            if not 'key' in kwargs:
+                key=self.deferrer.gen_key()
+                self.key=key
+                kwargs.update({'key':key})
+            else:
+                self.key=kwargs['key']
         self.kwargs=kwargs
         return self
 
@@ -254,9 +293,18 @@ class st_deferrer:
         self.mode=mode
         self.queue=[]
         self.pile=[]
+        self.hidden_tags=[]
         self.current_context=None
         self.echo=echo_generator(self)
     
+    def hide(self,tag):
+        if not tag in self.hidden_tags:
+            self.hidden_tags.append(tag)
+
+    def show(self,tag):
+        if tag in self.hidden_tags:
+            self.hidden_tags.remove(tag)
+
     def gen_key(self):
         return self.key_manager.gen_key()
 
@@ -273,7 +321,8 @@ class st_deferrer:
         #appends an object to the deferrer's pile
         self.pile.append(obj)
         if self.mode=='streamed':
-            self.stream()
+            while len(self.pile)>0:
+                self.stream()
 
     def remove(self,obj):
         #removes an object from the deferrer's pile/queue (useful for st_one_shot_callable objects)
@@ -287,7 +336,7 @@ class st_deferrer:
         #useful for real-time rendering when working with threads
         if not len(self.pile)==0:
             obj=self.pile.pop(0)
-            if not obj.has_rendered:
+            if not obj.has_rendered and not obj.tag in self.hidden_tags:
                 try:
                     obj.render()
                 except DuplicateWidgetID:
@@ -299,7 +348,7 @@ class st_deferrer:
     def refresh(self):
         #renders every object in the queue (to refresh the whole app display), then renders objects still in the pile, if any.
         for obj in self.queue:
-            if not obj.has_rendered:
+            if not obj.has_rendered and not obj.tag in self.hidden_tags:
                 try:
                     obj.render()
                 except DuplicateWidgetID:

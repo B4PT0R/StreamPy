@@ -83,7 +83,7 @@ Type some text and click the button to see what happens.
 
 Note that, contrary to normal Streamlit syntax, txt is not refering directly to the text content string of the text_input widget, but is rather an object placeholder for the (future!) content of this text_input. It will be actualized in real-time if the content changes, and you may retrieve its value at any time by accessing its .value property, as in the snippet.
 
-Even though the Python interpreter maintains its session state, you may want to use st.session_state as you would in a Streamlit script.
+Even though the Python interpreter maintains its session state, you can still use st.session_state as you would in a Streamlit script.
 
 To ease widget's keys managment, feel free to use the implemented key generator:
 ```python
@@ -93,15 +93,36 @@ st.text_input("Enter text here:",key=my_text_input_key)
 This will generate a unique key for your widget's state that you may latter access via :
 ```python
 my_text_input_state=st.session_state[my_text_input_key]
-``` 
+```
+
+If you don't provide any key for your widget, a unique key will be attributed to it automaticly, but you will loose the possibility to know which.
+
+All renderable widgets also implement a tag property. The tag defaults to the name of corresponding streamlit attribute.
+For instance, a st.text_input object will be associated to the tag='text_input' by default. If you want to, you may choose the tag to which your widget is associated by adding a tag kwarg to its arguments when calling it:
+```python
+st.text_input("Enter text",tag='mytextinput')
+```
+
+This is useful to hide/show some widgets/groups of widgets dynamicaly in the console queue. For this purpose you may use:
+```python
+st.hide(tag)
+st.show(tag)
+```
+This will hide/show all widgets with the chosen tag.
+
 Apart from this, it's just normal Python and Streamlit commands!
 
 Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line and use the .value attribute to access widgets outputs).
 
-You may use the preimplemented clear() command to clear the console's queue.
+These shortcut functions are predeclared in the console's namespace:
+-clear() - clears the console's queue
+-restart() - restarts python session to its startup state
+-edit(file='buffer') - opens a file in the editor. Just calling edit() will open an unnamed text buffer.
+-close_editor() - closes the editor.
 
 In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
 The 'Restart Session' button will reinitialize the python session to its startup state.
+The 'Show/Hide history cells' button makes possible to choose whether to see or not the past input cells in the console's queue.
 
 Worth being noted: The python session runs a startup.py script at startup. You can customize this file to your likings (accessible via the "Open" button of the editor). Useful to import common modules, define your favorite functions or classes, or serve as an entry point to preload other chosen scripts automaticly when the session starts.
 
