@@ -13,5 +13,6 @@ Most basic widgets/commands/syntaxes already work, but there may be issues to ad
 -Improve robustness via adequate exception handling
 
 -Implement the possibility to choose if past input cells are visible or not.
+-->Done
 
 -Find a way to intercept whenever the Python's interperter is waiting for an input in stdin via a text_input widget (would allow to use 'input' command seamlessly, or to run scripts requiring inputs from stdin...)
