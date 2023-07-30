@@ -98,9 +98,13 @@ Apart from this, it's just normal Python and Streamlit commands!
 Refer to [Streamlit documentation](https://docs.streamlit.io/library/api-reference) to get more informations on possible commands and how to use them. Most snippets provided in the examples will be working directly in the console (provided you skip the "import streamlit as st" line and use the .value attribute to access widgets outputs).
 
 These shortcut functions are predeclared in the console's namespace:
+
 -clear() - clears the console's queue
+
 -restart() - restarts python session to its startup state
+
 -edit(file='buffer') - opens a file in the editor. Just calling edit() will open an unnamed text buffer.
+
 -close_editor() - closes the editor.
 
 In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
