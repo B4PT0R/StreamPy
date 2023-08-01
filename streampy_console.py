@@ -3,7 +3,6 @@ from code import InteractiveConsole
 import sys
 from contextlib import contextmanager
 from echo import echo_generator
-from tkinter import simpledialog
 
 #Redirect inputs/outputs to a target I/O object
 @contextmanager
