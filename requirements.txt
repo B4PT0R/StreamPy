@@ -11,4 +11,5 @@ pydeck
 scipy
 sympy
 vega-datasets
+pynput
 #jsonpickle

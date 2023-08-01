@@ -210,7 +210,8 @@ def make_input():
         stl.button("Next", key='next',on_click=on_next_click)
     if state.run_button:
         stl.experimental_rerun() 
-        # Not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
+        #pass
+        #Not ideal, as it causes a blinking of the app, messes with st.snow and st.balloons, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
         #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
         #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
         #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic

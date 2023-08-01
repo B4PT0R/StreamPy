@@ -3,10 +3,11 @@ from code import InteractiveConsole
 import sys
 from contextlib import contextmanager
 from echo import echo_generator
+from tkinter import simpledialog
 
-#Redirect writes to sdtout or sdterr to a target I/O object
+#Redirect inputs/outputs to a target I/O object
 @contextmanager
-def redirect_outputs(target):
+def redirect_IOs(target):
     stdout_fd=sys.stdout
     stderr_fd=sys.stderr
     sys.stdout=target
@@ -15,8 +16,8 @@ def redirect_outputs(target):
     sys.stdout=stdout_fd
     sys.stderr=stderr_fd
 
-#The I/O object intercepting the interpreter's outputs. Redirects writes to a Queue object (for thread-safe communication between threads).
-class OutputInterceptor:
+#The I/O object intercepting the interpreter's outputs.
+class OutputsInterceptor:
     def __init__(self,console,deferrer):
         self.deferrer=deferrer
         self.console=console
@@ -26,7 +27,7 @@ class OutputInterceptor:
         self.buffer += text # buffering until a line is finished
         if text.endswith('\n'):
             self.console.results[-1].append(self.buffer)
-            self.deferrer.text(self.buffer) # appends the line to the queue
+            self.deferrer.text(self.buffer) # appends the line as a st.text widget to the deferrer's queue
             self.buffer = '' # resets buffer to empty
 
     def flush(self):
@@ -37,10 +38,10 @@ class Console(InteractiveConsole):
 #The python interpreter in which the code typed in the input cell will be run
     def __init__(self,deferrer,names=None,startup=None):
         self.names=names or {} #synchronizes an optional outter namespace with the interpreter's one
-        self.names['names']=self.names
-        self.names['ME']=self
+        self.names['names']=self.names # allows to access this names dictionary from within the console itself
+        self.names['ME']=self # allows to access the console objet itself inside it's own namespace
         self.deferrer=deferrer #keeps a reference to the deferrer in which streamlit calls will be piled
-        self.interceptor=OutputInterceptor(self,self.deferrer)
+        self.interceptor=OutputsInterceptor(self,self.deferrer)
         InteractiveConsole.__init__(self,self.names)
         self.inputs=[] # History of inputs
         self.results=[] # History of outputs
@@ -73,7 +74,7 @@ class Console(InteractiveConsole):
         self.results.append([]) # prepares a new list of results (in which the outputs of the interpreter will be appended)
         self.deferrer.echo=echo_generator(self.deferrer,source) # passes the input code to an echo_generator object and update the deferrer's echo attribute. useful to handle st.echo.
         self.deferrer.mode='streamed' #passes the deferrer in streamed mode (widgets are rendered as soon as they are appended to the deferrer's pile)
-        with redirect_outputs(self.interceptor):
+        with redirect_IOs(self.interceptor):
             try:
                 #compile the code first to check the code is correct / complete
                 output = code.compile_command(source,'<input>',symbol='exec')
