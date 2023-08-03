@@ -1,5 +1,6 @@
 import json
-
+import os
+_root_path_=os.path.dirname(os.path.abspath(__file__))
 #components.json allows for easier implementation of third party components in the streamlit_deferrer module
 
 """
@@ -13,7 +14,7 @@ Structure of components.json :
 
 #Loads the components dictionary from components.json
 def load_components_dict():
-    with open("components.json",'r') as f:
+    with open(os.path.join(_root_path_,"components.json"),'r') as f:
         ComponentsDict=json.load(f)
     return ComponentsDict
 
