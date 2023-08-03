@@ -1,6 +1,7 @@
 import code
 from code import InteractiveConsole
 import sys
+from input import readline
 from contextlib import contextmanager
 from echo import echo_generator
 
@@ -9,11 +10,14 @@ from echo import echo_generator
 def redirect_IOs(target):
     stdout_fd=sys.stdout
     stderr_fd=sys.stderr
+    stdin_fd=sys.stdin
     sys.stdout=target
     sys.stderr=target
+    sys.stdin=target
     yield
     sys.stdout=stdout_fd
     sys.stderr=stderr_fd
+    sys.stdin=stdin_fd
 
 #The I/O object intercepting the interpreter's outputs.
 class OutputsInterceptor:
@@ -29,17 +33,24 @@ class OutputsInterceptor:
             self.deferrer.text(self.buffer) # appends the line as a st.text widget to the deferrer's queue
             self.buffer = '' # resets buffer to empty
 
+    def readline(self):
+        if not self.buffer=='':
+            self.write('\n')
+        string=readline(self.console.server)
+        return string
+
     def flush(self):
         pass 
 
 
 class Console(InteractiveConsole):
 #The python interpreter in which the code typed in the input cell will be run
-    def __init__(self,deferrer,names=None,startup=None):
+    def __init__(self,deferrer,server,names=None,startup=None):
         self.names=names or {} #synchronizes an optional outter namespace with the interpreter's one
         self.names['names']=self.names # allows to access this names dictionary from within the console itself
         self.names['ME']=self # allows to access the console objet itself inside it's own namespace
         self.deferrer=deferrer #keeps a reference to the deferrer in which streamlit calls will be piled
+        self.server=server
         self.interceptor=OutputsInterceptor(self,self.deferrer)
         InteractiveConsole.__init__(self,self.names)
         self.inputs=[] # History of inputs

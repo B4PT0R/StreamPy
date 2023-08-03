@@ -7,6 +7,7 @@ _root_path_=os.path.dirname(os.path.abspath(__file__))
 if not _root_path_ in sys.path:
     sys.path.append(_root_path_)
 from crypto import gen_lock, check_lock
+from input import SocketIOServer
 import streamlit as stl
 from streampy_console import Console
 from streamlit_ace import st_ace
@@ -52,6 +53,11 @@ if 'deferrer' not in state:
     state.deferrer=st_deferrer(key_manager=km)
 st=state.deferrer
 st.reset()
+
+#SocketIO server used to redirect stdin to a custom input widget in direct communication with the backend
+if not 'server' in state:
+    state.server=SocketIOServer()
+    state.server.start()
 
 #the python console in which the code will be run. Initialized at user login.
 if 'console' not in state:
@@ -139,7 +145,7 @@ def show_hide_history_cells():
 #Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=Console(st,names=globals(), startup=os.path.join(state.user_folder,"startup.py"))
+    state.console=Console(st,names=globals(),server=state.server, startup=os.path.join(state.user_folder,"startup.py"))
 
 #Clears the console's queue
 def clear():
@@ -353,7 +359,7 @@ else:
         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
         os.chdir(state.user_folder)
     if state.console is None:
-        state.console=Console(st,names=globals(), startup=os.path.join(state.user_folder,"startup.py"))
+        state.console=Console(st,names=globals(),server=state.server,startup=os.path.join(state.user_folder,"startup.py"))
     
     #Forces the interpreter's cwd to the user's folder
     if state.mode=="web":
