@@ -11,4 +11,6 @@ pydeck
 scipy
 sympy
 vega-datasets
+python-socketio
+eventlet
 #jsonpickle
