@@ -21,8 +21,7 @@ def redirect_IOs(target):
 
 #The I/O object intercepting the interpreter's outputs.
 class OutputsInterceptor:
-    def __init__(self,console,deferrer):
-        self.deferrer=deferrer
+    def __init__(self,console):
         self.console=console
         self.buffer = ''
 
@@ -30,13 +29,13 @@ class OutputsInterceptor:
         self.buffer += text # buffering until a line is finished
         if text.endswith('\n'):
             self.console.results[-1].append(self.buffer)
-            self.deferrer.text(self.buffer) # appends the line as a st.text widget to the deferrer's queue
+            self.console.deferrer.text(self.buffer) # appends the line as a st.text widget to the deferrer's queue
             self.buffer = '' # resets buffer to empty
 
     def readline(self):
         if not self.buffer=='':
             self.write('\n')
-        string=readline(self.console.server)
+        string=readline(self.console.deferrer,self.console.server)
         return string
 
     def flush(self):
@@ -51,7 +50,7 @@ class Console(InteractiveConsole):
         self.names['ME']=self # allows to access the console objet itself inside it's own namespace
         self.deferrer=deferrer #keeps a reference to the deferrer in which streamlit calls will be piled
         self.server=server
-        self.interceptor=OutputsInterceptor(self,self.deferrer)
+        self.interceptor=OutputsInterceptor(self)
         InteractiveConsole.__init__(self,self.names)
         self.inputs=[] # History of inputs
         self.results=[] # History of outputs

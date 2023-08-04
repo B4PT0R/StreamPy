@@ -28,7 +28,7 @@ class SocketIOServer:
             self.is_running=True
 
 
-def modal_input():
+def readline(deferrer=None,server=None):
     js_code = f"""
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
@@ -45,14 +45,12 @@ def modal_input():
     function sendMessage() {{
         var input = document.getElementById('myInput');
         input.disabled = true;
+        input.style.backgroundColor = "white";
         socket.emit('message', input.value);
     }}
     </script>
     """
-    return components.html(js_code, height=53)
-
-def readline(server=None):
-    modal_input()
+    deferrer.html(js_code, height=53)
     string = server.queue.get()
     return string
 

@@ -1,5 +1,6 @@
 import json
 import os
+import streamlit.components.v1 as components
 _root_path_=os.path.dirname(os.path.abspath(__file__))
 #components.json allows for easier implementation of third party components in the streamlit_deferrer module
 
@@ -29,6 +30,13 @@ def ImportComponents(ComponentsDict):
 
 ComponentsDict=load_components_dict()
 COMPONENTS=ImportComponents(ComponentsDict)
+
+SPECIAL={
+    "html":components.html,
+    "iframe":components.iframe
+}
+
+COMPONENTS.update(SPECIAL)
 
 #This dictionary maps the built-in streamlit attributes to the adequate st_object subtype used by the deferrer
 ATTRIBUTES_MAPPING = {
@@ -77,7 +85,9 @@ ATTRIBUTES_MAPPING = {
     "get_option": "st_callable",
     "graphviz_chart": "st_callable",
     "header": "st_callable",
-    "help": "st_callable", 
+    "help": "st_callable",
+    "html":"st_callable",
+    "iframe":"st_callable",
     "image": "st_callable",
     "info": "st_callable",
     "json": "st_callable",
