@@ -11,7 +11,10 @@ import streamlit as st
 import json
 _root_path_=os.path.dirname(os.path.abspath(__file__))
 
-class SocketIOServer:
+#This module is for implementing stdin redirection
+
+class SocketIOListener:
+    #SocketIO server/listener for local communication between streamlit and the front-end input widget
 
     def __init__(self,session_id):
         self.session_id=session_id
@@ -39,7 +42,8 @@ class SocketIOServer:
     def get_message(self):
         return self.queue.get()
 
-class FirestoreManager:
+class FirestoreListener:
+    #Firestore listener to implement the same thing when the app is served on streamlit's cloud 
     def __init__(self,session_id):
         self.mode='web'
         self.session_id=session_id
@@ -70,10 +74,11 @@ class FirestoreManager:
         # Create a callback on_snapshot function to capture changes
         def on_snapshot(doc_snapshot, changes, read_time):
             doc = doc_snapshot[0]
-            ID=doc.to_dict().get("ID")
+            message=doc.to_dict()
+            ID=message.get("ID")
             if not ID==self.last_ID:
                 self.last_ID=ID
-                self.queue.put(doc.to_dict().get("content"))
+                self.queue.put(message.get("content"))
             
         # Watch the document
         doc_ref = self.db.collection('messages').document(self.session_id)
@@ -86,18 +91,21 @@ class FirestoreManager:
     
 def Listener(session_id,mode=None):
     if mode=='web':
-        return FirestoreManager(session_id)
+        return FirestoreListener(session_id)
     elif mode=='local':
-        return SocketIOServer(session_id)
+        return SocketIOListener(session_id)
 
-
+#to redirect stdin.readline to a custom widget on the front end
 def readline(deferrer=None,listener=None):
+    #different html code for the input widget depending on the situation
     if listener.mode=='web':
-        file='input_web.txt'
+        file='input_web.html'
     elif listener.mode=='local':
-        file='input_local.txt'
-    with open(os.path.join(_root_path_, file)) as f:
-        js_code = f.read()
-    deferrer.html(js_code.replace('#SESSION_ID#',listener.session_id), height=53)
-    string = listener.get_message()
+        file='input_local.html'
+    with open(os.path.join(_root_path_, file),'r') as f:
+        html_code = f.read()
+    #render the widget
+    deferrer.html(html_code.replace('#SESSION_ID#',listener.session_id), height=53)
+    #wait for the output of the widget
+    string = listener.get_message() 
     return string

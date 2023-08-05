@@ -19,7 +19,7 @@ def redirect_IOs(target):
     sys.stderr=stderr_fd
     sys.stdin=stdin_fd
 
-#The I/O object intercepting the interpreter's outputs.
+#The I/O object intercepting the interpreter's inputs/outputs.
 class OutputsInterceptor:
     def __init__(self,console):
         self.console=console

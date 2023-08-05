@@ -136,6 +136,7 @@ def edit(file='buffer'):
         file_content=''
     state.file_content=file_content
 
+#Show/hide past input cells
 def show_hide_history_cells():
     if 'history_cell' in st.hidden_tags:
         st.show('history_cell')
@@ -217,7 +218,7 @@ def make_input():
     if state.run_button:
         stl.experimental_rerun() 
         #pass
-        #Not ideal, as it causes a blinking of the app, messes with st.snow and st.balloons, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
+        #Not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
         #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
         #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
         #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
@@ -359,12 +360,13 @@ else:
         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
         os.chdir(state.user_folder)
     if state.listener is None:
+        #start the socket front-end listener for sdtin redirection
         state.listener=Listener(state.user,state.mode)
         state.listener.start_listening()
     if state.console is None:
         state.console=Console(st,names=globals(),listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
 
-    #Forces the interpreter's cwd to the user's folder
+    #Forces the interpreter's cwd to the user's folder and makes secrets inaccessible
     if state.mode=="web":
         stl.secrets=None
         os.chdir(state.user_folder)
