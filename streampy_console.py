@@ -35,7 +35,7 @@ class OutputsInterceptor:
     def readline(self):
         if not self.buffer=='':
             self.write('\n')
-        string=readline(self.console.deferrer,self.console.server)
+        string=readline(self.console.deferrer,self.console.listener)
         return string
 
     def flush(self):
@@ -44,12 +44,12 @@ class OutputsInterceptor:
 
 class Console(InteractiveConsole):
 #The python interpreter in which the code typed in the input cell will be run
-    def __init__(self,deferrer,server,names=None,startup=None):
+    def __init__(self,deferrer,listener,names=None,startup=None):
         self.names=names or {} #synchronizes an optional outter namespace with the interpreter's one
         self.names['names']=self.names # allows to access this names dictionary from within the console itself
         self.names['ME']=self # allows to access the console objet itself inside it's own namespace
         self.deferrer=deferrer #keeps a reference to the deferrer in which streamlit calls will be piled
-        self.server=server
+        self.listener=listener
         self.interceptor=OutputsInterceptor(self)
         InteractiveConsole.__init__(self,self.names)
         self.inputs=[] # History of inputs

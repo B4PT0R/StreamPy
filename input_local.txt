@@ -1,0 +1,19 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+var socket = io.connect('http://localhost:5000');
+</script>
+<input id="myInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 4px;">
+<script>
+document.getElementById("myInput").addEventListener("keyup", function(event) {{
+    if (event.keyCode === 13) {{
+        sendMessage();
+    }}
+}});
+
+function sendMessage() {{
+    var input = document.getElementById('myInput');
+    input.disabled = true;
+    input.style.backgroundColor = "white";
+    socket.emit('message', input.value);
+}}
+</script>

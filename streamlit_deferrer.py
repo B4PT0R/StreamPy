@@ -296,6 +296,7 @@ class st_deferrer:
         self.hidden_tags=[]
         self.current_context=None
         self.echo=echo_generator(self)
+        self.secrets=None
     
     def hide(self,tag):
         if not tag in self.hidden_tags:

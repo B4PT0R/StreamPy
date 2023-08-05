@@ -13,4 +13,4 @@ sympy
 vega-datasets
 python-socketio
 eventlet
-#jsonpickle
+firebase_admin

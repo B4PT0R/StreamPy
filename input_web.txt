@@ -1,0 +1,41 @@
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<input id="myInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 4px;">
+<script>
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAECpzgZqk4TURvtBwCdOs5_s_ZcR2dgGk",
+    authDomain: "streampy123.firebaseapp.com",
+    projectId: "streampy123",
+    storageBucket: "streampy123.appspot.com",
+    messagingSenderId: "176822490256",
+    appId: "1:176822490256:web:969b6c037e5725a6ba7415",
+    measurementId: "G-G9QDYGC16K"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  document.getElementById("myInput").addEventListener("keyup", function(event) {
+    if (event.keyCode === 13) {
+        sendMessage();
+    }
+  });
+
+  function sendMessage() {
+    var input = document.getElementById('myInput');
+    var content = input.value;
+    var ID = new Date().toISOString();  // Use the current timestamp as the ID
+
+    // Set the 'content' and 'ID' fields in the 'TEST' document
+    db.collection("messages").doc("TEST").set({
+        ID: ID,
+        content: content
+    })
+
+    input.disabled = true;
+    input.style.backgroundColor = "white";
+  }
+</script>
+
