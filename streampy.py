@@ -27,11 +27,10 @@ if 'root' not in state:
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    #if state.root.startswith('/mount') or state.root.startswith('/app'):
-    #    state.mode="web"
-    #else:
-    #    state.mode="local"
-    state.mode="web"
+    if state.root.startswith('/mount') or state.root.startswith('/app'):
+        state.mode="web"
+    else:
+        state.mode="local"
 
 #Username
 if 'user' not in state:
@@ -312,7 +311,7 @@ def make_editor(editor_column):
 
 #Makes the webapp login        
 def make_login(): 
-    stl.subheader("Welcome to Streampy!")
+    stl.subheader("Streampy - Streamlit powered Python 3 interpreter")
     stl.write("Please enter your credentials. If these are new, a new account will be created automaticly.")
     con=stl.container()
     with con:

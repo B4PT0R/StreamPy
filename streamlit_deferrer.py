@@ -234,28 +234,6 @@ class st_property(st_renderable):
         with ctx(self.context):
             self.value=st_map(self.name)
 
-
-
-class st_direct_callable:
-    # Resolves streamlit call directly without appending to the queue
-    # useful for st.spinner, st.progress...
-    def __init__(self,deferrer,name,context):
-        self.deferrer=deferrer
-        self.name=name
-        self.context=context
-        self.value=None
-
-    def __call__(self,*args,**kwargs):
-        self.value=st_map(self.name)(*args,**kwargs)
-        return self.value
-    
-
-
-def st_direct_property(deferrer,name,context):
-    # Returns a streamlit property directly without appending to the queue
-    # Useful for st.column_config, st.session_state...
-    return st_map(name)    
-
 class st_one_shot_callable(st_renderable):
     # For callables that need to be rendered only once
     # such as st.balloons, st.snow...
@@ -276,13 +254,42 @@ class st_one_shot_callable(st_renderable):
         super().render()
         self.deferrer.remove(self)
 
-def st_balloons():
-    st.balloons()
-    time.sleep(2)
 
-def st_snow():
-    st.snow()
-    time.sleep(7)   
+class st_direct_callable:
+    # Resolves streamlit call directly without appending to the queue
+    # useful for st.spinner, st.progress. st.balloons st.snow (optional delay to let the animation finish before the next rerun)
+    def __init__(self,deferrer,name,context):
+        self.deferrer=deferrer
+        self.name=name
+        self.context=context
+        self.value=None
+        self.delay=0
+
+    def __call__(self,*args,**kwargs):
+        self.value=st_map(self.name)(*args,**kwargs)
+        time.sleep(self.delay)
+        return self.value
+    
+
+
+def st_direct_property(deferrer,name,context):
+    # Returns a streamlit property directly without appending to the queue
+    # Useful for st.column_config, st.session_state...
+    return st_map(name)    
+
+
+class st_balloons(st_direct_callable):
+    
+    def __init__(self,deferrer,name,context=None):
+        st_direct_callable.__init__(self,deferrer,name,context)
+        self.delay=2
+
+class st_snow(st_direct_callable):
+    
+    def __init__(self,deferrer,name,context=None):
+        st_direct_callable.__init__(self,deferrer,name,context)
+        self.delay=7       
+
 
 class st_deferrer:
     """
