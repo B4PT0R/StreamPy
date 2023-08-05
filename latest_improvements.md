@@ -14,7 +14,7 @@ Below are past problems that are now correctly handled :
 
 - possibility to hide/show dynamicly the past input cells in the console queue.
 
-- Implemented stdin redirection to a custom javascript widget in the app. Allows to use python 'input' command (and run any script using this feature). For now, this will only work if the app is run localy (the trick to make it work involves a localhost websocket server to implement direct communication between the frontend and the backend). Still trying to figure out a better way to implement this so that it works when the app is run in the cloud. 
+- Implemented stdin redirection to a custom javascript widget in the app. Allows to use python 'input' command (and run any script using this feature).
 
 
 
