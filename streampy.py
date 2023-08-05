@@ -27,10 +27,11 @@ if 'root' not in state:
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    if state.root.startswith('/mount') or state.root.startswith('/app'):
-        state.mode="web"
-    else:
-        state.mode="local"
+    #if state.root.startswith('/mount') or state.root.startswith('/app'):
+    #    state.mode="web"
+    #else:
+    #    state.mode="local"
+    state.mode="web"
 
 #Username
 if 'user' not in state:
@@ -54,10 +55,10 @@ if 'deferrer' not in state:
 st=state.deferrer
 st.reset()
 
-#Listener used to redirect stdin to a custom input widget in direct communication with the python backend
+#Listener used to redirect stdin to a custom input widget in direct communication with the python backend.
+#Initilized when user logs-in
 if not 'listener' in state:
-    state.listener=Listener(mode=state.mode)
-    state.listener.start_listening()
+    state.listener=None
 
 #the python console in which the code will be run. Initialized at user login.
 if 'console' not in state:
@@ -358,9 +359,12 @@ else:
     if state.user_folder=="":
         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
         os.chdir(state.user_folder)
+    if state.listener is None:
+        state.listener=Listener(state.user,state.mode)
+        state.listener.start_listening()
     if state.console is None:
         state.console=Console(st,names=globals(),listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
-    
+
     #Forces the interpreter's cwd to the user's folder
     if state.mode=="web":
         os.chdir(state.user_folder)

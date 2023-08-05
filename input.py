@@ -13,7 +13,8 @@ _root_path_=os.path.dirname(os.path.abspath(__file__))
 
 class SocketIOServer:
 
-    def __init__(self):
+    def __init__(self,session_id):
+        self.session_id=session_id
         self.mode='local'
         self.queue=Queue()
         self.sio = socketio.Server(cors_allowed_origins='*')
@@ -39,9 +40,9 @@ class SocketIOServer:
         return self.queue.get()
 
 class FirestoreManager:
-    def __init__(self):
-        # Use a service account
+    def __init__(self,session_id):
         self.mode='web'
+        self.session_id=session_id
         cred_dict=dict(st.secrets['firebase_credentials'])
         with open(os.path.join(_root_path_,'credentials.json'),'w') as f:
             json.dump(cred_dict,f)
@@ -52,14 +53,17 @@ class FirestoreManager:
         self.db = firestore.client()
         self.queue=Queue()
         self.last_ID=None
+        doc_ref = self.db.collection('messages').document(self.session_id)
+        if not doc_ref.get().exists:
+            doc_ref.set({'ID': '', 'content': ''})
 
     def send_message(self,content):
-        doc_ref = self.db.collection('messages').document('TEST')
+        doc_ref = self.db.collection('messages').document(self.session_id)
         message={
             'ID':datetime.now().isoformat(),
             'content':content
         }
-        doc_ref.set(message, merge=True)
+        doc_ref.set(message)
 
     def start_listening(self):
 
@@ -72,7 +76,7 @@ class FirestoreManager:
                 self.queue.put(doc.to_dict().get("content"))
             
         # Watch the document
-        doc_ref = self.db.collection('messages').document('TEST')
+        doc_ref = self.db.collection('messages').document(self.session_id)
         doc_watch = doc_ref.on_snapshot(on_snapshot)
         time.sleep(1)
         self.queue=Queue()
@@ -80,11 +84,11 @@ class FirestoreManager:
     def get_message(self):
         return self.queue.get()
     
-def Listener(mode=None):
+def Listener(session_id,mode=None):
     if mode=='web':
-        return FirestoreManager()
+        return FirestoreManager(session_id)
     elif mode=='local':
-        return SocketIOServer()
+        return SocketIOServer(session_id)
 
 
 def readline(deferrer=None,listener=None):
@@ -94,6 +98,6 @@ def readline(deferrer=None,listener=None):
         file='input_local.txt'
     with open(os.path.join(_root_path_, file)) as f:
         js_code = f.read()
-    deferrer.html(js_code, height=53)
+    deferrer.html(js_code.replace('#SESSION_ID#',listener.session_id), height=53)
     string = listener.get_message()
     return string

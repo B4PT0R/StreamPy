@@ -28,8 +28,7 @@
     var content = input.value;
     var ID = new Date().toISOString();  // Use the current timestamp as the ID
 
-    // Set the 'content' and 'ID' fields in the 'TEST' document
-    db.collection("messages").doc("TEST").set({
+    db.collection("messages").doc("#SESSION_ID#").set({
         ID: ID,
         content: content
     })
