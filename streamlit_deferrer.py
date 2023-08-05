@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 from components import COMPONENTS,ATTRIBUTES_MAPPING
 from echo import echo_generator
 # Imports custom components and a mapping of streamlit methods/attributes onto the appropriate deferred version
@@ -274,7 +275,14 @@ class st_one_shot_callable(st_renderable):
     def render(self):
         super().render()
         self.deferrer.remove(self)
-    
+
+def st_balloons():
+    st.balloons()
+    time.sleep(2)
+
+def st_snow():
+    st.snow()
+    time.sleep(7)   
 
 class st_deferrer:
     """
