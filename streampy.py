@@ -366,6 +366,7 @@ else:
 
     #Forces the interpreter's cwd to the user's folder
     if state.mode=="web":
+        stl.secrets=None
         os.chdir(state.user_folder)
 
     #Show the app's main page
