@@ -42,18 +42,36 @@ class SocketIOListener:
     def get_message(self):
         return self.queue.get()
 
+
+def firebase_check_app_initialized():
+    try:
+        firebase_admin.get_app()
+    except ValueError:
+        return False
+    else:
+        return True
+
+def firebase_admin_init_app(cred):
+    try:
+        return firebase_admin.get_app()
+    except ValueError:
+        pass
+    cred_dict=dict(st.secrets['firebase_credentials'])
+    with open(os.path.join(_root_path_,'credentials.json'),'w') as f:
+        json.dump(cred_dict,f)
+    app=firebase_admin.initialize_app(firebase_admin.credentials.Certificate(os.path.join(_root_path_,'credentials.json')))
+    os.remove(os.path.join(_root_path_,'credentials.json'))
+    return app                                  
+    
+
+
+
 class FirestoreListener:
     #Firestore listener to implement the same thing when the app is served on streamlit's cloud 
     def __init__(self,session_id):
         self.mode='web'
         self.session_id=session_id
-        cred_dict=dict(st.secrets['firebase_credentials'])
-        with open(os.path.join(_root_path_,'credentials.json'),'w') as f:
-            json.dump(cred_dict,f)
-        cred = credentials.Certificate(os.path.join(_root_path_,'credentials.json'))
-        cred_dict=None
-        os.remove(os.path.join(_root_path_,'credentials.json'))
-        firebase_admin.initialize_app(cred)
+        firebase_admin_init_app(st.secrets['firebase_credentials'])
         self.db = firestore.client()
         self.queue=Queue()
         self.last_ID=None

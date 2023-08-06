@@ -56,8 +56,6 @@ class Console(InteractiveConsole):
         InteractiveConsole.__init__(self,self.names)
         self.inputs=[] # History of inputs
         self.results=[] # History of outputs
-        self.runfile(os.path.join(_root_path_,'protect_secrets.py'))
-        self.inputs.pop(-1)
         if startup: # Runs an optional startup file
             self.runfile(startup)
             self.inputs.pop(-1) # Removes the startup file input from history

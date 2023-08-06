@@ -8,6 +8,8 @@ if not _root_path_ in sys.path:
     sys.path.append(_root_path_)
 from crypto import gen_lock, check_lock
 from input import Listener
+from protect_secrets import protect_secrets
+protect_secrets()
 import streamlit as stl
 from streampy_console import Console
 from streamlit_ace import st_ace
@@ -27,7 +29,7 @@ if 'root' not in state:
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    if state.root.startswith('/mount') or state.root.startswith('/app'):
+    if True:#if state.root.startswith('/mount') or state.root.startswith('/app'):
         state.mode="web"
     else:
         state.mode="local"
