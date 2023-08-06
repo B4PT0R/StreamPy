@@ -29,7 +29,7 @@ if 'root' not in state:
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    if True:#state.root.startswith('/mount') or state.root.startswith('/app'):
+    if state.root.startswith('/mount') or state.root.startswith('/app'):
         state.mode="web"
     else:
         state.mode="local"
@@ -57,7 +57,7 @@ st=state.deferrer
 st.reset()
 
 #Listener used to redirect stdin to a custom input widget in direct communication with the python backend.
-#Initilized when user logs-in
+#Initialized when user logs-in
 if not 'listener' in state:
     state.listener=None
 
