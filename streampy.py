@@ -29,7 +29,7 @@ if 'root' not in state:
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    if state.root.startswith('/mount') or state.root.startswith('/app'):
+    if True:#state.root.startswith('/mount') or state.root.startswith('/app'):
         state.mode="web"
     else:
         state.mode="local"
