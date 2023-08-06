@@ -115,6 +115,8 @@ def save_as(name):
 def close_editor():
     state.show_editor=False
 
+
+
 #Runs the code content open in the editor in the console  
 def run_editor_content():
     code=state.file_content
@@ -146,7 +148,14 @@ def show_hide_history_cells():
 #Restarts the whole session to startup state
 def restart():
     st.clear()
-    state.console=Console(st,names=globals(),listener=state.listener, startup=os.path.join(state.user_folder,"startup.py"))
+    names={
+        'st':st,
+        'clear':clear,
+        'restart':restart,
+        'edit':edit,
+        'close_editor':close_editor
+        }
+    state.console=Console(st,names=names,listener=state.listener, startup=os.path.join(state.user_folder,"startup.py"))
 
 #Clears the console's queue
 def clear():
@@ -364,11 +373,17 @@ else:
         state.listener=Listener(state.user,state.mode)
         state.listener.start_listening()
     if state.console is None:
-        state.console=Console(st,names=globals(),listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
+        names={
+            'st':st,
+            'clear':clear,
+            'restart':restart,
+            'edit':edit,
+            'close_editor':close_editor
+        }
+        state.console=Console(st,names=names,listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
 
     #Forces the interpreter's cwd to the user's folder and makes secrets inaccessible
     if state.mode=="web":
-        stl.secrets=None
         os.chdir(state.user_folder)
 
     #Show the app's main page
