@@ -16,6 +16,10 @@ Below are past problems that are now correctly handled :
 
 - Implemented stdin redirection to a custom javascript widget in the app. Allows to use python 'input' command (and run any script using this feature).
 
+- Improve security by restricting access to some modules/attributes for code run by the user from the interactive interpreter
+
+- Provide cloud storage for user files.
+
 
 
 
