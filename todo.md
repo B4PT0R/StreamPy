@@ -20,4 +20,8 @@ Most basic widgets/commands/syntaxes already work, but there may be issues to ad
 -Implement proper stdin redirection
 -->Done
 
+-Proper user authentication and cloud storage.
+-->Done
 
+-Improving security via the possibility to restrict the use of some modules in the console.
+-->Done

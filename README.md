@@ -124,6 +124,8 @@ These shortcut functions are predeclared in the console's namespace:
 
 -close_editor() - closes the editor.
 
+-exit() - same as loging out (saves your folder in the cloud and exits session gracefully)
+
 In the side Menu, you'll be able to open a basic text editor to edit/save longer scripts as well as running them in the console.
 The 'Restart Session' button will reinitialize the python session to its startup state.
 The 'Show/Hide history cells' button makes possible to choose whether to see or not the past input cells in the console's queue.

@@ -1,21 +1,25 @@
-import logging
-logging.basicConfig(level=logging.WARNING)
-log = logging.getLogger("log")
-log.setLevel(logging.DEBUG)
-import os, sys
+import os,sys
 _root_path_=os.path.dirname(os.path.abspath(__file__))
 if not _root_path_ in sys.path:
     sys.path.append(_root_path_)
+from restrict_module import restrict_module
+restrict_module('streamlit',['secrets'])
+restrict_module('os',['system'])
+restrict_module('subprocess')
+restrict_module('firebase_admin')
+restrict_module('firebase_tools')
+restrict_module('code',['InteractiveConsole','InteractiveInterpreter'])
 from crypto import gen_lock, check_lock
 from input import Listener
-from protect_secrets import protect_secrets
-protect_secrets()
 import streamlit as stl
+from firebase_tools import firebase_app_is_initialized,firebase_init_app,FirestoreDocument,FirebaseStorage
+if not firebase_app_is_initialized():
+    firebase_init_app(stl.secrets["firebase_credentials"])
 from streampy_console import Console
 from streamlit_ace import st_ace
 from streamlit_deferrer import st_deferrer,KeyManager
-import json
 import shutil
+import time
 
 
 #-------------Initialize session_state variables--------------
@@ -40,6 +44,10 @@ if 'user' not in state:
         state.user=""
     else:
         state.user="DefaultUser"
+
+#A boolean indicating if the user has log-out
+if 'log_out' not in state:
+    state.log_out=False
 
 #User folder
 if 'user_folder' not in state:
@@ -107,6 +115,20 @@ if 'index' not in state:
 
 #------------------------------Main functions-------------------------------------
 
+#dumps the entire user folder to the cloud
+def dump_to_cloud():
+    cloud=FirebaseStorage()
+    try:
+        with st.spinner("Please wait while your folder is being saved in the cloud..."):
+            cloud.dump_folder_to_cloud(state.user_folder,state.user)
+    except Exception as e:
+        st.exception(e)
+    else:
+        st.success("Folder saved successfully.")
+
+def log_out():
+    state.log_out=True
+
 #Save the content of the editor as... 
 def save_as(name):
     with open(os.path.join(state.user_folder,name),'w') as f:
@@ -116,8 +138,6 @@ def save_as(name):
 #Closes the editor
 def close_editor():
     state.show_editor=False
-
-
 
 #Runs the code content open in the editor in the console  
 def run_editor_content():
@@ -155,7 +175,8 @@ def restart():
         'clear':clear,
         'restart':restart,
         'edit':edit,
-        'close_editor':close_editor
+        'close_editor':close_editor,
+        'exit':log_out
         }
     state.console=Console(st,names=names,listener=state.listener, startup=os.path.join(state.user_folder,"startup.py"))
 
@@ -173,19 +194,27 @@ def process(code):
 #Sets the sidebar menu
 def make_menu():
    with stl.sidebar:
+        if state.mode=="web":
+            stl.subheader("Session")
+            stl.text(state.user)
+            def on_log_out_click():
+                state.log_out=True
+            stl.button("Log out",on_click=on_log_out_click,use_container_width=True)
+            stl.write('---')
         stl.subheader("Menu")
         def on_open_editor_click():
             edit('buffer')
-        stl.button("Open Editor",on_click=on_open_editor_click,use_container_width=True)
+        stl.button("Open editor",on_click=on_open_editor_click,use_container_width=True)
         def on_close_editor_click():
             close_editor()
-        stl.button("Close Editor",on_click=on_close_editor_click,use_container_width=True)
+        stl.button("Close editor",on_click=on_close_editor_click,use_container_width=True)
         def on_restart_click():
             restart()
-        stl.button("Restart Session",on_click=on_restart_click,use_container_width=True)
+        stl.button("Restart session",on_click=on_restart_click,use_container_width=True)
         def on_history_click():
             show_hide_history_cells()
         stl.button("Show/Hide history cells",on_click=on_history_click,use_container_width=True)
+        
 
 
 #Sets the welcome message header and help expander
@@ -330,37 +359,46 @@ def make_login():
         def on_submit_click():
             if not state.username=="" and not state.password=="":
                 try:
-                    with open(os.path.join(state.root,"users.json"),'r') as f:
-                        users=json.load(f)
+                    doc=FirestoreDocument('Documents','Users')
+                    cloud=FirebaseStorage()
+                    users=doc.load()
                     if state.username in users:
-                        if check_lock(state.password,users[state.username]):
+                        if check_lock(state.password,users[state.username]['password']):
                             state.user=state.username
                             state.user_folder=os.path.join(state.root,"UserFiles",state.user)
+                            with stl.spinner("Please wait while your folder is being uploaded from the cloud..."):
+                                cloud.load_folder_from_cloud(state.user,state.user_folder)
+                            if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
+                                shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
                         else:
                             stl.warning("Wrong password.")
+                            time.sleep(0.5)
                     else:
-                        users[state.username]=gen_lock(state.password,30)
-                        with open(os.path.join(state.root,"users.json"),'w') as f:
-                            json.dump(users,f)
+                        users[state.username]={
+                            'password':gen_lock(state.password,30)
+                        }
+                        doc.dump(users)
                         state.user=state.username
-                        os.mkdir(os.path.join(state.root,"UserFiles",state.user))
+                        if not os.path.exists(os.path.join(state.root,"UserFiles",state.user)):
+                            os.mkdir(os.path.join(state.root,"UserFiles",state.user))
                         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                        shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
+                        if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
+                            shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
                 except Exception as e:
-                    #stl.exception(exception=e)
+                    stl.exception(e)
                     stl.warning("Something went wrong. Please try again.")    
             else:
-                stl.warning("Non-empty username and password required")
+                stl.warning("Non-empty username and password required.")
 
         with stl.form("login",clear_on_submit=True):
             stl.text_input("Username (ABCabc123_):",key='username')
             stl.text_input("Password:",type="password",key='password')
             stl.form_submit_button("Submit",on_click=on_submit_click)
-        stl.warning("This log-in is very basic and provides little security. It is only meant to let you have a personal folder in the StreamPy app so that you may test it comfortably. Your password is protected (it is stored strongly encrypted) but the content of your folder is not. A malvolent user could sneak in and access this content. Please don't store sensitive data in your folder!")
-        stl.warning("The app is still a work in progress and will be rebuilt frequently. As a result, files stored in your folder will be lost. It is therefore recommended that you copy/paste your scripts to local files if you want to save them in the long run. Sorry for the inconvenience.")
-
+        stl.info("Latest improvement: All files created in your folder are now saved in a cloud storage so that you may access them later. Any change you make in your folder's contents will be uploaded to the cloud when you log-out.")
+        
 
 #-----------------------------Main app session's logic-------------------------
+
 if state.user=="":
     #Ask for credentials
     stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
@@ -371,7 +409,7 @@ else:
         state.user_folder=os.path.join(state.root,"UserFiles",state.user)
         os.chdir(state.user_folder)
     if state.listener is None:
-        #start the socket front-end listener for sdtin redirection
+        #start the front-end listener for sdtin redirection
         state.listener=Listener(state.user,state.mode)
         state.listener.start_listening()
     if state.console is None:
@@ -380,12 +418,10 @@ else:
             'clear':clear,
             'restart':restart,
             'edit':edit,
-            'close_editor':close_editor
+            'close_editor':close_editor,
+            'exit':log_out
         }
         state.console=Console(st,names=names,listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
-
-    #Forces the interpreter's cwd to the user's folder and makes secrets inaccessible
-    if state.mode=="web":
         os.chdir(state.user_folder)
 
     #Show the app's main page
@@ -401,3 +437,21 @@ else:
         stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
         make_menu()
         make_console()
+
+if state.log_out:
+    if state.mode=="web":
+        dump_to_cloud()
+        shutil.rmtree(state.user_folder)
+    state.open_file=None
+    state.file_content=None
+    state.show_editor=False
+    state.username=""
+    state.password=""
+    state.user=""
+    state.user_folder=""
+    state.listener=None
+    state.console=None
+    state.deferrer.clear()
+    state.log_out=False
+    os.chdir(_root_path_)
+    stl.experimental_rerun()

@@ -1,14 +1,11 @@
 import os
-import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import firestore
 import time
 from datetime import datetime
 import socketio
 import eventlet
 from threading import Thread 
 from queue import Queue
-import streamlit as st
-import json
 _root_path_=os.path.dirname(os.path.abspath(__file__))
 
 #This module is for implementing stdin redirection
@@ -42,50 +39,23 @@ class SocketIOListener:
     def get_message(self):
         return self.queue.get()
 
-
-def firebase_check_app_initialized():
-    try:
-        firebase_admin.get_app()
-    except ValueError:
-        return False
-    else:
-        return True
-
-def firebase_admin_init_app(cred):
-    try:
-        return firebase_admin.get_app()
-    except ValueError:
-        pass
-    cred_dict=dict(st.secrets['firebase_credentials'])
-    with open(os.path.join(_root_path_,'credentials.json'),'w') as f:
-        json.dump(cred_dict,f)
-    app=firebase_admin.initialize_app(firebase_admin.credentials.Certificate(os.path.join(_root_path_,'credentials.json')))
-    os.remove(os.path.join(_root_path_,'credentials.json'))
-    return app                                  
-    
-
-
-
 class FirestoreListener:
     #Firestore listener to implement the same thing when the app is served on streamlit's cloud 
     def __init__(self,session_id):
         self.mode='web'
         self.session_id=session_id
-        firebase_admin_init_app(st.secrets['firebase_credentials'])
-        self.db = firestore.client()
         self.queue=Queue()
         self.last_ID=None
-        doc_ref = self.db.collection('messages').document(self.session_id)
-        if not doc_ref.get().exists:
-            doc_ref.set({'ID': '', 'content': ''})
+        self.doc = firestore.client().collection('messages').document(self.session_id)
+        if not self.doc.get().exists:
+            self.doc.set({'ID': '', 'content': ''})
 
     def send_message(self,content):
-        doc_ref = self.db.collection('messages').document(self.session_id)
         message={
             'ID':datetime.now().isoformat(),
             'content':content
         }
-        doc_ref.set(message)
+        self.doc.set(message)
 
     def start_listening(self):
 
@@ -99,8 +69,7 @@ class FirestoreListener:
                 self.queue.put(message.get("content"))
             
         # Watch the document
-        doc_ref = self.db.collection('messages').document(self.session_id)
-        doc_watch = doc_ref.on_snapshot(on_snapshot)
+        self.doc.on_snapshot(on_snapshot)
         time.sleep(1)
         self.queue=Queue()
 

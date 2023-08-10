@@ -58,7 +58,8 @@ class Console(InteractiveConsole):
         self.results=[] # History of outputs
         if startup: # Runs an optional startup file
             self.runfile(startup)
-            self.inputs.pop(-1) # Removes the startup file input from history
+            if not len(self.inputs)==0:
+                self.inputs.pop(-1) # Removes the startup file input from history
             
         
     def send_in(self,name,obj): # send an name:object pair in the interpreter's namespace
@@ -88,7 +89,7 @@ class Console(InteractiveConsole):
         with redirect_IOs(self.interceptor):
             try:
                 #compile the code first to check the code is correct / complete
-                output = code.compile_command(source,'<input>',symbol='exec')
+                output = code.compile_command(source,'user',symbol='exec')
             except Exception as e:
                 print(str(e))
             else:
