@@ -1,11 +1,11 @@
 import streamlit as st
 import time
-from components import COMPONENTS,ATTRIBUTES_MAPPING
-from echo import echo_generator
 # Imports custom components and a mapping of streamlit methods/attributes onto the appropriate deferred version
+from components import COMPONENTS,ATTRIBUTES_MAPPING
+#Specificaly deals with st.echo
+from echo import echo_generator
 from streamlit.errors import DuplicateWidgetID
 from contextlib import contextmanager
-#import jsonpickle as jsp # optionaly implements serialization of the deferrer's queue (to save queue templates for instance)
 import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger("log")
@@ -383,14 +383,3 @@ class st_deferrer:
     def clear(self):
         self.queue=[]
         self.pile=[] 
-"""
-    #optionaly implements serialized dumps/loads of the queue
-    def dump(self):
-        queue=self.queue.copy()
-        serialized_queue=jsp.encode(queue)
-        return serialized_queue
-    
-    def load(self,serialized_queue):
-        decoded_queue=jsp.decode(serialized_queue)
-        self.queue=decoded_queue
-"""
