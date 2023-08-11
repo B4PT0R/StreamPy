@@ -370,7 +370,7 @@ def make_editor(editor_column):
         if run_butt:
             run_editor_content()
 
-#Makes the webapp login        
+#Makes the webapp login page        
 def make_login(): 
     stl.subheader("Streampy - Streamlit powered Python 3 interpreter")
     stl.write("Please enter your credentials. If these are new, a new account will be created automaticly.")
