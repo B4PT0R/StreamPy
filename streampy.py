@@ -20,6 +20,7 @@ from streamlit_ace import st_ace
 from streamlit_deferrer import st_deferrer,KeyManager
 import shutil
 import time
+import json
 
 
 #-------------Initialize session_state variables--------------
@@ -146,19 +147,26 @@ def run_editor_content():
         state.console.run(code)
     stl.experimental_rerun()
 
-#Opens a new buffer or file in the editor
-def edit(file='buffer'):
+#Opens a new buffer or file in the editor (prefilled with an optional text)
+def edit(file='buffer',text=None):
     state.show_editor=True
     state.open_file=file
     if not file=='buffer':
         if not os.path.exists(os.path.join(state.user_folder,file)):
             with open(os.path.join(state.user_folder,file),'w') as f:
                 pass
-        with open(os.path.join(state.user_folder,file),'r') as f:
-            file_content=f.read()
+        if text is None:
+            with open(os.path.join(state.user_folder,file),'r') as f:
+                file_content=f.read()
+        else:
+            file_content=text
     else:
-        file_content=''
+        if text is None:
+            file_content=''
+        else:
+            file_content=text
     state.file_content=file_content
+
 
 #Show/hide past input cells
 def show_hide_history_cells():
@@ -176,7 +184,8 @@ def restart():
         'restart':restart,
         'edit':edit,
         'close_editor':close_editor,
-        'exit':log_out
+        'exit':log_out,
+        'quit':log_out
         }
     state.console=Console(st,names=names,listener=state.listener, startup=os.path.join(state.user_folder,"startup.py"))
 
@@ -221,7 +230,7 @@ def make_menu():
 def make_welcome():
     stl.subheader("Welcome to StreamPy interactive interpreter.")
     with stl.expander("Click here to get help."):
-        with open(os.path.join(state.root,"Help.md"),'r') as f:
+        with open(os.path.join(state.root,"README.md"),'r') as f:
             stl.write(f.read())
 
 #Sets the input cell part 
@@ -307,8 +316,19 @@ def make_editor(editor_column):
         def on_file_name_change():
             if not state.file_name==' ':
                 edit(state.file_name)
-        basenames = [' ']+[os.path.basename(f) for f in os.listdir(state.user_folder)]
-        stl.selectbox('Select a file:',basenames,on_change=on_file_name_change,index=0,key='file_name')
+        def get_relative_paths(folder_path):
+            """Get all relative paths of files in the given folder, recursively."""
+            relative_paths = []
+            for dirpath, dirnames, filenames in os.walk(folder_path):
+                for filename in filenames:
+                    rel_dir = os.path.relpath(dirpath, folder_path)
+                    rel_path = os.path.join(rel_dir, filename)
+                    if rel_path.startswith('./'):
+                        rel_path=rel_path[2:]
+                    relative_paths.append(rel_path)
+            return relative_paths
+        files = [' ']+get_relative_paths(state.user_folder)
+        stl.selectbox('Select a file:',files,on_change=on_file_name_change,index=0,key='file_name')
     elif delete_butt:
         def on_yes():
             os.remove(os.path.join(state.user_folder,state.open_file))
@@ -394,7 +414,11 @@ def make_login():
             stl.text_input("Username (ABCabc123_):",key='username')
             stl.text_input("Password:",type="password",key='password')
             stl.form_submit_button("Submit",on_click=on_submit_click)
-        stl.info("Latest improvement: All files created in your folder are now saved in a cloud storage so that you may access them later. Any change you make in your folder's contents will be uploaded to the cloud when you log-out.")
+        stl.subheader("Latest improvements:")
+        with open(os.path.join(_root_path_,"improvements.json")) as f:
+            improvements=json.load(f)
+        for i in range(1,7):
+            stl.info(improvements[-i]) 
         
 
 #-----------------------------Main app session's logic-------------------------
@@ -419,7 +443,8 @@ else:
             'restart':restart,
             'edit':edit,
             'close_editor':close_editor,
-            'exit':log_out
+            'exit':log_out,
+            'quit':log_out
         }
         state.console=Console(st,names=names,listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
         os.chdir(state.user_folder)

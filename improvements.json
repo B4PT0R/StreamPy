@@ -1,0 +1,9 @@
+[
+    "Correct implementation of st.snow, st.balloons, st.spinner, st.progress, st.echo, st.column_config, st.session_state...",
+    "Automatic unique key attribution for compatible widgets in case you don't provide any.",
+    "Possibility to hide/show dynamicly the past input cells in the console queue.",
+    "stdin redirection to a custom javascript widget in the app. Allows to use python 'input' command.",
+    "Improved security by restricting access to some modules/attributes for code run from the interactive interpreter.",
+    "Cloud storage for user files. (Your folder's contents are automaticly dumped to the storage when you log out.)",
+    "exit() and quit() commands now log you out gracefully."
+]
