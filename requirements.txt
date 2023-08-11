@@ -10,6 +10,7 @@ bokeh
 pydeck
 scipy
 sympy
+scikit-learn
 vega-datasets
 python-socketio
 eventlet
