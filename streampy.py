@@ -167,7 +167,6 @@ def edit(file='buffer',text=None):
             file_content=text
     state.file_content=file_content
 
-
 #Show/hide past input cells
 def show_hide_history_cells():
     if 'history_cell' in st.hidden_tags:
@@ -200,6 +199,8 @@ def process(code):
             st.ace(value=code,language='python', auto_update=True,readonly=True,theme='chrome', min_lines=2,tag="history_cell")
             state.console.run(code)
 
+#---------------------------------App layout-------------------------------------
+
 #Sets the sidebar menu
 def make_menu():
    with stl.sidebar:
@@ -224,8 +225,6 @@ def make_menu():
             show_hide_history_cells()
         stl.button("Show/Hide history cells",on_click=on_history_click,use_container_width=True)
         
-
-
 #Sets the welcome message header and help expander
 def make_welcome():
     stl.subheader("Welcome to StreamPy interactive interpreter.")
@@ -271,7 +270,6 @@ def make_input():
         #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
         #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
         #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
-
 
 #Displays the whole console queue
 def make_console():
