@@ -1,4 +1,25 @@
 
 {
-    "ace":{"module":"streamlit_ace","component":"st_ace","type":"st_callable"}
+    "ace":{"module":"streamlit_ace","component":"st_ace","type":"st_callable"},
+    "add_vertical_space":{"module":"streamlit_extras.add_vertical_space","component":"add_vertical_space","type":"st_callable"},
+    "annotated_text":{"module":"annotated_text","component":"annotated_text","type":"st_callable"},
+    "annotation":{"module":"annotated_text","component":"annotation","type":"st_direct_callable"},
+    "add_app_logo":{"module":"streamlit_extras.app_logo","component":"add_logo","type":"st_callable"},
+    "buy_me_a_coffee":{"module":"streamlit_extras.buy_me_a_coffee","component":"button","type":"st_callable"},
+    "card":{"module":"streamlit_card","component":"card","type":"st_callable"},
+    "chart_container":{"module":"streamlit_extras.chart_container","component":"chart_container","type":"st_callable"},
+    "colored_header":{"module":"streamlit_extras.colored_header","component":"colored_header","type":"st_callable"},
+    "dataframe_explorer":{"module":"streamlit_extras.dataframe_explorer","component":"dataframe_explorer","type":"st_callable"},
+    "grid":{"module":"streamlit_extras.grid","component":"grid","type":"st_callable"},
+    "date_range_picker":{"module":"streamlit_extras.mandatory_date_range","component":"date_range_picker","type":"st_callable"},
+    "raw":{"module":"streamlit_extras.row","component":"row","type":"st_callable"},
+    "stateful_button":{"module":"streamlit_extras.stateful_button","component":"button","type":"st_callable"},
+    "stateful_chat":{"module":"streamlit_extras.stateful_chat","component":"chat","type":"st_callable"},
+    "stateful_add_message":{"module":"streamlit_extras.stateful_chat","component":"add_message","type":"st_callable"},
+    "stoggle":{"module":"streamlit_extras.stoggle","component":"stoggle","type":"st_callable"},
+    "stream_write":{"module":"streamlit_extras.streaming_write","component":"write","type":"st_callable"},
+    "stylable_container":{"module":"streamlit_extras.stylable_container","component":"stylable_container","type":"st_callable"},
+    "switch_page":{"module":"streamlit_extras.switch_page_button","component":"switch_page","type":"st_callable"},
+    "toggle_switch":{"module":"streamlit_toggle","component":"st_toggle_switch","type":"st_callable"},
+    "vertical_slider":{"module":"streamlit_vertical_slider","component":"vertical_slider","type":"st_callable"}
 }

@@ -1,4 +1,5 @@
 streamlit
+streamlit-extras
 streamlit-ace
 matplotlib
 numpy
