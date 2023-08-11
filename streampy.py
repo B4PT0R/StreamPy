@@ -411,7 +411,7 @@ def make_login():
                 stl.warning("Non-empty username and password required.")
 
         with stl.form("login",clear_on_submit=True):
-            stl.text_input("Username (ABCabc123_):",key='username')
+            stl.text_input("Username:",key='username')
             stl.text_input("Password:",type="password",key='password')
             stl.form_submit_button("Submit",on_click=on_submit_click)
         stl.subheader("Latest improvements:")
