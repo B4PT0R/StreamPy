@@ -194,7 +194,7 @@ def clear():
 def process(code):
     if not (code=="" or code==None):
         with state.console_queue:
-            st.ace(value=code,language='python', auto_update=True,readonly=True,theme='chrome', min_lines=2,tag="history_cell")
+            st.ace(value=code,language='python', auto_update=True,readonly=True,theme='nord_dark',font_size=16, min_lines=2,tag="history_cell")
             state.console.run(code)
 
 #---------------------------------App layout-------------------------------------
@@ -232,39 +232,39 @@ def make_welcome():
 
 #Sets the input cell part 
 def make_input():
-    n=len(state.console.inputs)
-    if state.index<=0:
-        state.index=0
-    elif state.index>n:
-        state.index=n
+    #n=len(state.console.inputs)
+    #if state.index<=0:
+    #    state.index=0
+    #elif state.index>n:
+    #    state.index=n
 
-    if n==0 or state.index==0:
-        state.input_code=""
-    else:   
-        state.input_code=state.console.inputs[n-state.index]
-    
-    state.output_code = st_ace(value=state.input_code, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=2, key=state.input_key)
-    a,_,b,_,c=stl.columns([1,3,1,3,1],gap='small')
-    with a:
-        def on_previous_click():
-            state.index+=1
-            state.input_key=km.gen_key()
-        stl.button("Prev.", key='previous',on_click=on_previous_click)
-    with b:
-        def on_run_click():
-            state.index=0
-            process(state.output_code)
-            state.input_key=km.gen_key()
-        stl.button("Run",key='run_button',on_click=on_run_click)
-    with c:  
-        def on_next_click():
-            state.index-=1
-            state.input_key=km.gen_key()
-        stl.button("Next", key='next',on_click=on_next_click)
-    if state.run_button:
-        stl.experimental_rerun() 
-        #pass
-        #Not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
+    #if n==0 or state.index==0:
+    #    state.input_code=""
+    #else:   
+    #    state.input_code=state.console.inputs[n-state.index]
+    #
+    #a,b=stl.columns(2,gap='small')
+    #with a:
+    #    def on_previous_click():
+    #        state.index+=1
+    #        state.input_key=km.gen_key()
+    #    stl.button("Previous", key='previous',on_click=on_previous_click,use_container_width=True)    
+    #with b:  
+    #    def on_next_click():
+    #        state.index-=1
+    #        state.input_key=km.gen_key()
+    #    stl.button("Next", key='next',on_click=on_next_click,use_container_width=True)
+
+    state.input_code=""
+
+    state.output_code = st_ace(value=state.input_code, language='python', auto_update=False,theme='nord_dark', font_size=16,min_lines=2, key=state.input_key)
+    if not state.output_code is None and not state.output_code=="":
+        #state.index=0
+        process(state.output_code)
+        state.output_code=""
+        state.input_key=km.gen_key()
+        stl.experimental_rerun()
+        #This rerun is not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
         #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
         #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
         #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
@@ -362,7 +362,7 @@ def make_editor(editor_column):
                     stl.success("File renamed.")
             stl.text_input("Enter new name of file:",on_change=on_file_name_change,key='file_name')
         
-        state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=True,theme='chrome', min_lines=15, key=state.editor_key)
+        state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=False,theme='nord_dark', font_size=16, min_lines=15, key=state.editor_key)
         if run_butt:
             run_editor_content()
 
