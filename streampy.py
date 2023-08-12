@@ -5,10 +5,8 @@ if not _root_path_ in sys.path:
 from restrict_module import restrict_module
 restrict_module('streamlit',['secrets'])
 restrict_module('os',['system'])
-restrict_module('subprocess')
 restrict_module('firebase_admin')
 restrict_module('firebase_tools')
-restrict_module('code',['InteractiveConsole','InteractiveInterpreter'])
 from crypto import gen_lock, check_lock
 from input import Listener
 import streamlit as stl
