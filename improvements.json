@@ -6,5 +6,6 @@
     "Improved security by restricting access to some modules/attributes for code run from the interactive interpreter.",
     "Cloud storage for user files. (Your folder's contents are automaticly dumped to the storage when you log out.)",
     "exit() and quit() commands now log you out gracefully.",
-    "Added a bunch of streamlit-extras components (mostly to check if it works fine). Call them using 'st.extra_component_name'."
+    "Added a bunch of streamlit-extras components (mostly to check if it works fine). Call them using 'st.extra_component_name'.",
+    "Improved styling and changed the input cell / editor for a (neat!) streamlit-code-editor widget."
 ]
