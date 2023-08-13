@@ -1,6 +1,7 @@
 streamlit
 streamlit-extras
 streamlit-ace
+streamlit-code-editor
 matplotlib
 numpy
 pandas

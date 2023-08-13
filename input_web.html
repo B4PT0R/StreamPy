@@ -1,6 +1,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<input id="myInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 4px;">
+<input id="myInput" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: black; color: white; border: 2px solid #5ace8b; outline: none">
 <script>
   // app's Firebase configuration
   const firebaseConfig = {
@@ -34,7 +34,9 @@
     })
 
     input.disabled = true;
-    input.style.backgroundColor = "white";
+    input.style.backgroundColor = "black";
+    input.style.color = "grey";
+    input.style.border="2px solid grey"
   }
 </script>
 

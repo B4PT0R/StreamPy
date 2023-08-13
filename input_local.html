@@ -2,7 +2,7 @@
 <script>
 var socket = io.connect('http://localhost:5000');
 </script>
-<input id="myInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 4px;">
+<input id="myInput" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: black; color: white; border: 2px solid #5ace8b; outline: none">
 <script>
 document.getElementById("myInput").addEventListener("keyup", function(event) {{
     if (event.keyCode === 13) {{
@@ -13,7 +13,9 @@ document.getElementById("myInput").addEventListener("keyup", function(event) {{
 function sendMessage() {{
     var input = document.getElementById('myInput');
     input.disabled = true;
-    input.style.backgroundColor = "white";
+    input.style.backgroundColor = "black";
+    input.style.color = "grey";
+    input.style.border="2px solid grey"
     socket.emit('message', input.value);
 }}
 </script>

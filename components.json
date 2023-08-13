@@ -8,6 +8,7 @@
     "buy_me_a_coffee":{"module":"streamlit_extras.buy_me_a_coffee","component":"button","type":"st_callable"},
     "card":{"module":"streamlit_card","component":"card","type":"st_callable"},
     "chart_container":{"module":"streamlit_extras.chart_container","component":"chart_container","type":"st_callable"},
+    "code_editor":{"module":"code_editor","component":"code_editor","type":"st_callable"},
     "colored_header":{"module":"streamlit_extras.colored_header","component":"colored_header","type":"st_callable"},
     "dataframe_explorer":{"module":"streamlit_extras.dataframe_explorer","component":"dataframe_explorer","type":"st_callable"},
     "grid":{"module":"streamlit_extras.grid","component":"grid","type":"st_callable"},

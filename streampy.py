@@ -15,6 +15,7 @@ if not firebase_app_is_initialized():
     firebase_init_app(stl.secrets["firebase_credentials"])
 from streampy_console import Console
 from streamlit_ace import st_ace
+from custom_code_editor import input_cell,editor,code_editor_output_parser
 from streamlit_deferrer import st_deferrer,KeyManager
 import shutil
 import time
@@ -71,6 +72,12 @@ if not 'listener' in state:
 #the python console in which the code will be run. Initialized at user login.
 if 'console' not in state:
     state.console = None
+
+if not 'input_cell_output_parser' in st.session_state:
+    st.session_state.input_cell_output_parser=code_editor_output_parser()
+
+if not 'editor_output_parser' in st.session_state:
+    st.session_state.editor_output_parser=code_editor_output_parser()
 
 #the file currently open in the editor
 if 'open_file' not in state:
@@ -194,8 +201,8 @@ def clear():
 def process(code):
     if not (code=="" or code==None):
         with state.console_queue:
-            st.ace(value=code,language='python', auto_update=True,readonly=True,theme='nord_dark',font_size=16, min_lines=2,tag="history_cell")
-            state.console.run(code)
+                st.code(code,language='python',tag="history_cell")
+                state.console.run(code)
 
 #---------------------------------App layout-------------------------------------
 
@@ -232,42 +239,40 @@ def make_welcome():
 
 #Sets the input cell part 
 def make_input():
-    #n=len(state.console.inputs)
-    #if state.index<=0:
-    #    state.index=0
-    #elif state.index>n:
-    #    state.index=n
+    n=len(state.console.inputs)
+    if state.index<=0:
+        state.index=0
+    elif state.index>n:
+        state.index=n
 
-    #if n==0 or state.index==0:
-    #    state.input_code=""
-    #else:   
-    #    state.input_code=state.console.inputs[n-state.index]
-    #
-    #a,b=stl.columns(2,gap='small')
-    #with a:
-    #    def on_previous_click():
-    #        state.index+=1
-    #        state.input_key=km.gen_key()
-    #    stl.button("Previous", key='previous',on_click=on_previous_click,use_container_width=True)    
-    #with b:  
-    #    def on_next_click():
-    #        state.index-=1
-    #        state.input_key=km.gen_key()
-    #    stl.button("Next", key='next',on_click=on_next_click,use_container_width=True)
-
-    state.input_code=""
-
-    state.output_code = st_ace(value=state.input_code, language='python', auto_update=False,theme='nord_dark', font_size=16,min_lines=2, key=state.input_key)
-    if not state.output_code is None and not state.output_code=="":
-        #state.index=0
-        process(state.output_code)
-        state.output_code=""
+    if n==0 or state.index==0:
+        state.input_code=""
+    else:   
+        state.input_code=state.console.inputs[n-state.index]
+    
+    
+    event,code=input_cell(state.input_code,key=state.input_key)
+    if event=='submit':
+        state.index=0
+        process(code)
         state.input_key=km.gen_key()
         stl.experimental_rerun()
         #This rerun is not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
         #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
         #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
         #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
+
+    a,b=stl.columns(2,gap='small')
+    with a:
+        def on_previous_click():
+            state.index+=1
+            state.input_key=km.gen_key()
+        stl.button("Previous", key='previous',on_click=on_previous_click,use_container_width=True)    
+    with b:  
+        def on_next_click():
+            state.index-=1
+            state.input_key=km.gen_key()
+        stl.button("Next", key='next',on_click=on_next_click,use_container_width=True)
 
 #Displays the whole console queue
 def make_console():
@@ -286,31 +291,17 @@ def make_console():
         make_input()
 
 #Displays the editor (could be simplified, reorganized, but I somewhat struggled with widget refreshing. This mess is the result of this struggle :) )
-def make_editor(editor_column):
+def make_editor():
     stl.subheader(f"Editing: {os.path.basename(state.open_file)}")
-    c1,c2,c3,c4,c5,c6,c7,c8=stl.columns(8)
-    with c1:
-        new_butt=stl.button("New",use_container_width=True)
-    with c2:
-        open_butt=stl.button("Open",use_container_width=True)
-    with c3:
-        save_butt=stl.button("Save",use_container_width=True)
-    with c4:
-        save_as_butt=stl.button("Save as",use_container_width=True)
-    with c5:
-        rename_butt=stl.button("Rename",use_container_width=True)
-    with c6:
-        delete_butt=stl.button("Delete",use_container_width=True)
-    with c7:
-        run_butt=stl.button("Run",use_container_width=True)
-    with c8:
-        close_butt=stl.button("Close",use_container_width=True)
-    if close_butt:
+    empty=stl.empty()
+    event,state.file_content=editor(state.file_content,key=state.editor_key)
+    if event=="close":
         close_editor()
         stl.experimental_rerun()
-    elif open_butt:
+    elif event=="open":
         def on_file_name_change():
             if not state.file_name==' ':
+                state.editor_key=km.gen_key()
                 edit(state.file_name)
         def get_relative_paths(folder_path):
             """Get all relative paths of files in the given folder, recursively."""
@@ -324,47 +315,50 @@ def make_editor(editor_column):
                     relative_paths.append(rel_path)
             return relative_paths
         files = [' ']+get_relative_paths(state.user_folder)
-        stl.selectbox('Select a file:',files,on_change=on_file_name_change,index=0,key='file_name')
-    elif delete_butt:
+        with empty:
+            stl.selectbox('Select a file:',files,on_change=on_file_name_change,index=0,key='file_name')
+    elif event=="delete":
         def on_yes():
             os.remove(os.path.join(state.user_folder,state.open_file))
-            edit()
             state.editor_key=km.gen_key()
-            with editor_column:
+            edit()
+            with empty:
                 stl.success("File deleted.")
-        stl.selectbox('Are you sure you want to delete this file ?',['No','Yes'],on_change=on_yes,index=0,key='sure')  
-    elif new_butt:
-        edit()
+        with empty:
+            stl.selectbox('Are you sure you want to delete this file ?',['No','Yes'],on_change=on_yes,index=0,key='sure')  
+    elif event=="new":
         state.editor_key=km.gen_key()
+        edit()
         stl.experimental_rerun()
-    else:
-        if save_butt:
-            if not state.open_file=='buffer':
-                save_as(state.open_file)
+    elif event=="submit":
+        if not state.open_file=='buffer':
+            save_as(state.open_file)
+            with empty:
                 stl.success("File saved.")
-            else:
-                def on_file_name_change():
-                    save_as(state.file_name)
-                    with editor_column:
-                        stl.success("File saved.")
-                stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        elif save_as_butt:
+        else:
             def on_file_name_change():
                 save_as(state.file_name)
-                with editor_column:
+                with empty:
                     stl.success("File saved.")
+            with empty:
+                stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
+    elif event=="save_as":
+        def on_file_name_change():
+            save_as(state.file_name)
+            with empty:
+                stl.success("File saved.")
+        with empty:
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
-        elif rename_butt:
-            def on_file_name_change():
-                os.remove(os.path.join(state.user_folder,state.open_file))
-                save_as(state.file_name)
-                with editor_column:
-                    stl.success("File renamed.")
+    elif event=="rename":
+        def on_file_name_change():
+            os.remove(os.path.join(state.user_folder,state.open_file))
+            save_as(state.file_name)
+            with empty:
+                stl.success("File renamed.")
+        with empty:
             stl.text_input("Enter new name of file:",on_change=on_file_name_change,key='file_name')
-        
-        state.file_content=st_ace(value=state.file_content, placeholder="", language='python', auto_update=False,theme='nord_dark', font_size=16, min_lines=15, key=state.editor_key)
-        if run_butt:
-            run_editor_content()
+    elif event=="run":
+        run_editor_content()
 
 #Makes the webapp login page        
 def make_login(): 
@@ -453,7 +447,7 @@ else:
         with console_column:
             make_console()
         with editor_column:
-            make_editor(editor_column)
+            make_editor()
     else:
         stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
         make_menu()
