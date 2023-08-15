@@ -1,20 +1,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<input id="#KEY#" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: #262730; color: white; border: 1px solid #5ace8b; outline: none">
 <script>
+const themeString = localStorage.getItem('stActiveTheme-/-v1');
+const themeObject = JSON.parse(themeString);
+const themeInput = themeObject.themeInput;
+const styleString = `
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: ${themeInput.secondaryBackgroundColor};
+    color: ${themeInput.textColor};
+    border: 1px solid ${themeInput.primaryColor};
+    outline: none;
+`;
+</script>
+<input id="#KEY#">
+<script>
+
+const input = document.getElementById('#KEY#')
+input.style=styleString
+
 var socket = io.connect('http://localhost:5000');
+
+// 1. Create a list of all element IDs on the webpage
+const allElements = document.querySelectorAll('*');
+const allIds = new Set();  // Using a Set for faster lookups
+
+allElements.forEach(element => {
+    if (element.id) {
+        allIds.add(element.id);
+    }
+});
+
+// 2. Loop through all keys in localStorage
+for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    // Check if the key starts with 'Input_'
+    if (key.startsWith('Input_')) {
+        // 3. Check if the key exists in the list of element IDs
+        if (!allIds.has(key)) {
+            // 4. Remove the entry from localStorage
+            localStorage.removeItem(key);
+
+            // Decrement the counter as the localStorage array length decreases when an item is removed
+            i--;
+        }
+    }
+}
 
 // Function to set the input as disabled
 function setInputDisabled() {
     var input = document.getElementById('#KEY#');
-    input.value=localStorage.getItem('messageSent_#KEY#')
+    input.value=localStorage.getItem('#KEY#')
     input.disabled = true;
-    input.style.backgroundColor = "#262730";
     input.style.color = "grey";
     input.style.border="none";
 }
 
 // Check if user has already sent a message
-if (localStorage.getItem('messageSent_#KEY#') !== null) {
+if (localStorage.getItem('#KEY#') !== null) {
     setInputDisabled();
 }
 
@@ -27,7 +72,7 @@ document.getElementById("#KEY#").addEventListener("keyup", function(event) {
 function sendMessage() {
     var input = document.getElementById('#KEY#');
     socket.emit('message', input.value);
-    localStorage.setItem('messageSent_#KEY#', input.value);
+    localStorage.setItem('#KEY#', input.value);
     // Set input as disabled
     setInputDisabled();
     // Save to localStorage that user has sent a message

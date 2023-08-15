@@ -1,53 +1,98 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<input id="#KEY#" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: #262730; color: white; border: 2px solid #5ace8b; outline: none">
 <script>
-  // app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyAECpzgZqk4TURvtBwCdOs5_s_ZcR2dgGk",
-    authDomain: "streampy123.firebaseapp.com",
-    projectId: "streampy123",
-    storageBucket: "streampy123.appspot.com",
-    messagingSenderId: "176822490256",
-    appId: "1:176822490256:web:969b6c037e5725a6ba7415",
-    measurementId: "G-G9QDYGC16K"
-  };
+const themeString = localStorage.getItem('stActiveTheme-/-v1');
+const themeObject = JSON.parse(themeString);
+const themeInput = themeObject.themeInput;
+const styleString = `
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: ${themeInput.secondaryBackgroundColor};
+    color: ${themeInput.textColor};
+    border: 1px solid ${themeInput.primaryColor};
+    outline: none;
+`;
+</script>
+<input id="#KEY#">
+<script>
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+const input = document.getElementById('#KEY#')
+input.style=styleString
 
-  // Function to set the input as disabled
-  function setInputDisabled() {
-      var input = document.getElementById('#KEY#');
-      input.value=localStorage.getItem('messageSent_#KEY#')
-      input.disabled = true;
-      input.style.backgroundColor = "#262730";
-      input.style.color = "grey";
-      input.style.border="none";
-  }
+// app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAECpzgZqk4TURvtBwCdOs5_s_ZcR2dgGk",
+  authDomain: "streampy123.firebaseapp.com",
+  projectId: "streampy123",
+  storageBucket: "streampy123.appspot.com",
+  messagingSenderId: "176822490256",
+  appId: "1:176822490256:web:969b6c037e5725a6ba7415",
+  measurementId: "G-G9QDYGC16K"
+};
 
-  // Check if user has already sent a message
-  if (localStorage.getItem('messageSent_#KEY#') !== null) {
-      setInputDisabled();
-  }
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  document.getElementById("#KEY#").addEventListener("keyup", function(event) {
-      if (event.keyCode === 13) {
-          sendMessage();
-      }
-  });
+// 1. Create a list of all element IDs on the webpage
+const allElements = document.querySelectorAll('*');
+const allIds = new Set();  // Using a Set for faster lookups
 
-  function sendMessage() {
+allElements.forEach(element => {
+    if (element.id) {
+        allIds.add(element.id);
+    }
+});
+
+// 2. Loop through all keys in localStorage
+for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    // Check if the key starts with 'Input_'
+    if (key.startsWith('Input_')) {
+        // 3. Check if the key exists in the list of element IDs
+        if (!allIds.has(key)) {
+            // 4. Remove the entry from localStorage
+            localStorage.removeItem(key);
+
+            // Decrement the counter as the localStorage array length decreases when an item is removed
+            i--;
+        }
+    }
+}
+
+// Function to set the input as disabled
+function setInputDisabled() {
     var input = document.getElementById('#KEY#');
-    var content = input.value;
-    var ID = new Date().toISOString();  // Use the current timestamp as the ID
-    db.collection("messages").doc("#SESSION_ID#").set({
-        ID: ID,
-        content: content
-    })
-    localStorage.setItem('messageSent_#KEY#', input.value);
+    input.value=localStorage.getItem('#KEY#')
+    input.disabled = true;
+    input.style.color = "grey";
+    input.style.border="none";
+}
+
+// Check if user has already sent a message
+if (localStorage.getItem('#KEY#') !== null) {
     setInputDisabled();
-  }
+}
+
+document.getElementById("#KEY#").addEventListener("keyup", function(event) {
+    if (event.keyCode === 13) {
+        sendMessage();
+    }
+});
+
+function sendMessage() {
+  var input = document.getElementById('#KEY#');
+  var content = input.value;
+  var ID = new Date().toISOString();  // Use the current timestamp as the ID
+  db.collection("messages").doc("#SESSION_ID#").set({
+      ID: ID,
+      content: content
+  })
+  localStorage.setItem('#KEY#', input.value);
+  setInputDisabled();
+}
 </script>
 

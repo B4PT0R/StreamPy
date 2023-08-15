@@ -349,7 +349,7 @@ class st_deferrer:
 
     def stream(self):
         #renders the first object found in the pile, then moves it to the queue
-        #useful for real-time rendering when working with threads
+        #useful for real-time rendering
         if not len(self.pile)==0:
             obj=self.pile.pop(0)
             if not obj.has_rendered and not obj.tag in self.hidden_tags:

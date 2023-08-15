@@ -469,4 +469,5 @@ if state.log_out:
     state.deferrer.clear()
     state.log_out=False
     os.chdir(_root_path_)
+    time.sleep(2)
     stl.experimental_rerun()
