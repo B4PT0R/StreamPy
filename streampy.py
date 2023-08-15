@@ -198,7 +198,7 @@ def clear():
     st.clear()
 
 #Run some code in the python console
-def process(code):
+def run(code):
     if not (code=="" or code==None):
         with state.console_queue:
                 st.code(code,language='python',tag="history_cell")
@@ -254,7 +254,7 @@ def make_input():
     event,code=input_cell(state.input_code,key=state.input_key)
     if event=='submit':
         state.index=0
-        process(code)
+        run(code)
         state.input_key=km.gen_key()
         stl.experimental_rerun()
         #This rerun is not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
@@ -290,7 +290,7 @@ def make_console():
     with input:
         make_input()
 
-#Displays the editor (could be simplified, reorganized, but I somewhat struggled with widget refreshing. This mess is the result of this struggle :) )
+#Displays the editor
 def make_editor():
     stl.subheader(f"Editing: {os.path.basename(state.open_file)}")
     empty=stl.empty()
