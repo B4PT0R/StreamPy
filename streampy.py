@@ -251,7 +251,7 @@ def make_input():
         state.input_code=state.console.inputs[n-state.index]
     
     
-    event,code=input_cell(state.input_code,key=state.input_key)
+    event,code=input_cell(state.input_code,key=state.input_key,focus=True)
     if event=='submit':
         state.index=0
         run(code)
