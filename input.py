@@ -85,6 +85,7 @@ def Listener(session_id,mode=None):
 #to redirect stdin.readline to a custom widget on the front end
 def readline(deferrer=None,listener=None):
     #different html code for the input widget depending on the situation
+    key='Input_'+datetime.now().isoformat()
     if listener.mode=='web':
         file='input_web.html'
     elif listener.mode=='local':
@@ -92,7 +93,7 @@ def readline(deferrer=None,listener=None):
     with open(os.path.join(_root_path_, file),'r') as f:
         html_code = f.read()
     #render the widget
-    deferrer.html(html_code.replace('#SESSION_ID#',listener.session_id), height=53)
+    deferrer.html(html_code.replace('#SESSION_ID#',listener.session_id).replace('#KEY#',key), height=53)
     #wait for the output of the widget
     string = listener.get_message() 
     return string

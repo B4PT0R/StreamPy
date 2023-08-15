@@ -1,6 +1,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<input id="myInput" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: black; color: white; border: 2px solid #5ace8b; outline: none">
+<input id="#KEY#" style="width: 100% ;box-sizing: border-box; padding: 10px; border-radius: 6px; background-color: #262730; color: white; border: 2px solid #5ace8b; outline: none">
 <script>
   // app's Firebase configuration
   const firebaseConfig = {
@@ -17,26 +17,37 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  document.getElementById("myInput").addEventListener("keyup", function(event) {
-    if (event.keyCode === 13) {
-        sendMessage();
-    }
+  // Function to set the input as disabled
+  function setInputDisabled() {
+      var input = document.getElementById('#KEY#');
+      input.value=localStorage.getItem('messageSent_#KEY#')
+      input.disabled = true;
+      input.style.backgroundColor = "#262730";
+      input.style.color = "grey";
+      input.style.border="none";
+  }
+
+  // Check if user has already sent a message
+  if (localStorage.getItem('messageSent_#KEY#') !== null) {
+      setInputDisabled();
+  }
+
+  document.getElementById("#KEY#").addEventListener("keyup", function(event) {
+      if (event.keyCode === 13) {
+          sendMessage();
+      }
   });
 
   function sendMessage() {
-    var input = document.getElementById('myInput');
+    var input = document.getElementById('#KEY#');
     var content = input.value;
     var ID = new Date().toISOString();  // Use the current timestamp as the ID
-
     db.collection("messages").doc("#SESSION_ID#").set({
         ID: ID,
         content: content
     })
-
-    input.disabled = true;
-    input.style.backgroundColor = "black";
-    input.style.color = "grey";
-    input.style.border="2px solid grey"
+    localStorage.setItem('messageSent_#KEY#', input.value);
+    setInputDisabled();
   }
 </script>
 
