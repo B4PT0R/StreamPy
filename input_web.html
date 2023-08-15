@@ -1,17 +1,14 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
-const themeString = localStorage.getItem('stActiveTheme-/-v1');
-const themeObject = JSON.parse(themeString);
-const themeInput = themeObject.themeInput;
 const styleString = `
     width: 100%;
     box-sizing: border-box;
     padding: 10px;
     border-radius: 6px;
-    background-color: ${themeInput.secondaryBackgroundColor};
-    color: ${themeInput.textColor};
-    border: 1px solid ${themeInput.primaryColor};
+    background-color: #292a33;
+    color: #FAFAFA;
+    border: 1px solid #67b5f9;
     outline: none;
 `;
 </script>
