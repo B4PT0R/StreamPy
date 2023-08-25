@@ -2,7 +2,10 @@ import os,shutil, tempfile, json
 import firebase_admin
 import streamlit as st
 from firebase_admin import credentials, firestore,storage
-_root_path_=os.path.dirname(os.path.abspath(__file__))
+_root_=os.path.dirname(os.path.abspath(__file__))
+
+def root_join(*args):
+    return os.path.join(_root_,*args)
 
 def firebase_app_is_initialized():
     try:
@@ -17,10 +20,10 @@ def firebase_init_app(cred):
         pass
     else:
         cred_dict=dict(cred)
-        with open(os.path.join(_root_path_,'credentials.json'),'w') as f:
+        with open(root_join('credentials.json'),'w') as f:
             json.dump(cred_dict,f)
-        firebase_admin.initialize_app(credentials.Certificate(os.path.join(_root_path_,'credentials.json')))
-        os.remove(os.path.join(_root_path_,'credentials.json'))
+        firebase_admin.initialize_app(credentials.Certificate(root_join('credentials.json')))
+        os.remove(root_join('credentials.json'))
 
 class FirestoreDocument:
     #A helper object to ease Firestore data manipulation in a json-like manner
