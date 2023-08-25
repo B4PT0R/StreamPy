@@ -5,7 +5,7 @@ from input import readline
 from contextlib import contextmanager
 from echo import echo_generator
 import os
-_root_path_=os.path.dirname(os.path.abspath(__file__))
+_root_=os.path.dirname(os.path.abspath(__file__))
 
 #Redirect inputs/outputs to a target I/O object
 @contextmanager
@@ -49,7 +49,7 @@ class Console(InteractiveConsole):
     def __init__(self,deferrer,listener,names=None,startup=None):
         self.names=names or {} #synchronizes an optional outter namespace with the interpreter's one
         self.names['names']=self.names # allows to access this names dictionary from within the console itself
-        #self.names['ME']=self # allows to access the console objet itself inside it's own namespace
+        self.names['ME']=self # allows to access the console objet itself inside it's own namespace
         self.deferrer=deferrer #keeps a reference to the deferrer in which streamlit calls will be piled
         self.listener=listener
         self.interceptor=OutputsInterceptor(self)

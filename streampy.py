@@ -1,26 +1,34 @@
 import os,sys
-_root_path_=os.path.dirname(os.path.abspath(__file__))
-if not _root_path_ in sys.path:
-    sys.path.append(_root_path_)
+_root_=os.path.dirname(os.path.abspath(__file__))
+if not _root_ in sys.path:
+    sys.path.append(_root_)
 from restrict_module import restrict_module
 restrict_module('streamlit',['secrets'])
 restrict_module('os',['system'])
 restrict_module('firebase_admin')
 restrict_module('firebase_tools')
-from crypto import gen_lock, check_lock
+restrict_module('google_search_tools')
+from crypto import encrypt,decrypt,gen_lock, check_lock
 from input import Listener
 import streamlit as stl
 from firebase_tools import firebase_app_is_initialized,firebase_init_app,FirestoreDocument,FirebaseStorage
 if not firebase_app_is_initialized():
     firebase_init_app(stl.secrets["firebase_credentials"])
+from google_search_tools import get_google_search
+google_search=get_google_search(stl.secrets["google_custom_search"]["API_KEY"],stl.secrets["google_custom_search"]["CX"])
 from streampy_console import Console
-from streamlit_ace import st_ace
 from custom_code_editor import input_cell,editor,code_editor_output_parser
+from audio_recorder_streamlit import audio_recorder
 from streamlit_deferrer import st_deferrer,KeyManager
 import shutil
 import time
 import json
+import io
+from pydub import AudioSegment
+from speech_recognition import Recognizer, AudioData
 
+def root_join(*args):
+    return os.path.join(_root_,*args)
 
 #-------------Initialize session_state variables--------------
 
@@ -29,11 +37,11 @@ state=stl.session_state
 
 #root folder's path of the app 
 if 'root' not in state:
-    state.root=_root_path_
+    state.root=_root_
 
 #detects wether the app runs localy or not.
 if 'mode' not in state:
-    if state.root.startswith('/mount') or state.root.startswith('/app'):
+    if True:#state.root.startswith('/mount') or state.root.startswith('/app'):
         state.mode="web"
     else:
         state.mode="local"
@@ -44,6 +52,13 @@ if 'user' not in state:
         state.user=""
     else:
         state.user="DefaultUser"
+
+#Password
+if 'password' not in state:
+    state.password=None
+
+if 'session_has_initialized' not in state:
+    state.session_has_initialized=False
 
 #A boolean indicating if the user has log-out
 if 'log_out' not in state:
@@ -73,6 +88,10 @@ if not 'listener' in state:
 if 'console' not in state:
     state.console = None
 
+#the AI assistant. Initialized at user login.
+if 'pandora' not in state:
+    state.pandora=None
+
 if not 'input_cell_output_parser' in st.session_state:
     st.session_state.input_cell_output_parser=code_editor_output_parser()
 
@@ -91,9 +110,13 @@ if 'open_file' not in state:
 if 'show_editor' not in state:
     state.show_editor=False
 
-#The current key of the input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
+#The current key of the python input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
 if 'input_key' not in state:
     state.input_key = km.gen_key()
+
+#The current key of the pandaora input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
+if 'pandora_input_key' not in state:
+    state.pandora_input_key = km.gen_key()
 
 #The code displayed in the input cell
 if 'input_code' not in state:
@@ -125,12 +148,9 @@ if 'index' not in state:
 def dump_to_cloud():
     cloud=FirebaseStorage()
     try:
-        with st.spinner("Please wait while your folder is being saved in the cloud..."):
-            cloud.dump_folder_to_cloud(state.user_folder,state.user)
+        cloud.dump_folder_to_cloud(state.user_folder,state.user)
     except Exception as e:
         st.exception(e)
-    else:
-        st.success("Folder saved successfully.")
 
 def log_out():
     state.log_out=True
@@ -153,7 +173,7 @@ def run_editor_content():
     stl.experimental_rerun()
 
 #Opens a new buffer or file in the editor (prefilled with an optional text)
-def edit(file='buffer',text=None):
+def edit(file='buffer',text=None,wait=False):
     state.show_editor=True
     state.open_file=file
     if not file=='buffer':
@@ -192,6 +212,15 @@ def restart():
         'quit':log_out
         }
     state.console=Console(st,names=names,listener=state.listener, startup=os.path.join(state.user_folder,"startup.py"))
+    if not state.APIkey=="":
+        from Pandora_web import Pandora
+        class Utils:
+            pass
+        utils=Utils()
+        utils.edit=edit
+        utils.google_search=google_search
+        state.pandora=Pandora(state.console,utils)
+        state.console.send_in('pandora',state.pandora)
 
 #Clears the console's queue
 def clear():
@@ -203,6 +232,28 @@ def run(code):
         with state.console_queue:
                 st.code(code,language='python',tag="history_cell")
                 state.console.run(code)
+
+def prompt_pandora(prompt):
+    code=f"""
+pandora.prompt(\"\"\"
+{prompt}
+\"\"\")
+"""
+    with state.console_queue:
+        state.console.run(code)
+
+def speech_to_text(audio_bytes):
+    rec = Recognizer()
+    try:
+        audio_data = AudioData(AudioSegment.from_wav(io.BytesIO(audio_bytes)).set_channels(1).raw_data,44100,2)
+        return rec.recognize_google(audio_data, language='fr')
+    except:
+        return ""
+
+def talk_to_pandora(audio_bytes):
+    text=speech_to_text(audio_bytes)
+    prompt_pandora(text)
+
 
 #---------------------------------App layout-------------------------------------
 
@@ -234,11 +285,11 @@ def make_menu():
 def make_welcome():
     stl.subheader("Welcome to StreamPy interactive interpreter.")
     with stl.expander("Click here to get help."):
-        with open(os.path.join(state.root,"README.md"),'r') as f:
+        with open(root_join("README.md"),'r') as f:
             stl.write(f.read())
 
-#Sets the input cell part 
-def make_input():
+#Sets the python input cell part 
+def make_python_input():
     n=len(state.console.inputs)
     if state.index<=0:
         state.index=0
@@ -250,8 +301,7 @@ def make_input():
     else:   
         state.input_code=state.console.inputs[n-state.index]
     
-    
-    event,code=input_cell(state.input_code,key=state.input_key,focus=True)
+    event,code=input_cell(state.input_code,lang='python',key=state.input_key,focus=True)
     if event=='submit':
         state.index=0
         run(code)
@@ -273,6 +323,50 @@ def make_input():
             state.index-=1
             state.input_key=km.gen_key()
         stl.button("Next", key='next',on_click=on_next_click,use_container_width=True)
+
+#Sets the pandora input cell part 
+def make_pandora_input():
+    c1,c2=stl.columns([92,8])
+    with c1:
+        event,prompt=input_cell('',key=state.pandora_input_key,lang='text',focus=True)
+    with c2:
+        audio_bytes = audio_recorder(
+            text="",
+            recording_color="#67b5f9",
+            neutral_color="#292A33",
+            icon_name="microphone",
+            icon_size="3x"
+        )
+    a,b,c=stl.columns(3)
+    with a:
+        prev=stl.button("Previous",use_container_width=True)
+    with b:
+        keep_going=stl.button("Keep going!",use_container_width=True)
+    with c:
+        next=stl.button("Next",use_container_width=True)
+    if keep_going:
+        prompt_pandora("Keep going!")
+    if audio_bytes:
+        stl.audio(audio_bytes)
+        talk_to_pandora(audio_bytes)
+    if event=='submit':
+        prompt_pandora(prompt)
+        state.pandora_input_key=km.gen_key()
+        stl.experimental_rerun()
+        #This rerun is not ideal, as it causes a blinking of the app, but sucessful at avoiding the "missing/double widget bug" appearing in some cases, for some obscur reason...
+        #I guess the issue comes from the number of mainloop turns required by streamlit to "consume" the widget
+        #In case a widget needs several ones, the next call to refresh will create a duplicate until the first is consumed by streamlit
+        #The issue only applies for unkeyed widgets, as I somewhat managed to remove the bug for keyed ones by adding a DuplicateWidgetID exception catching in the deferrer's refresh and stream logic
+
+def make_input():
+    if not state.APIkey=="":
+        tab1,tab2=stl.tabs(["Run python code","Ask Pandora"])
+        with tab1:
+            make_python_input()
+        with tab2:
+            make_pandora_input()
+    else:
+        make_python_input()
 
 #Displays the whole console queue
 def make_console():
@@ -360,56 +454,157 @@ def make_editor():
     elif event=="run":
         run_editor_content()
 
+def make_sign_up():
+    def on_submit_click():
+        if not state.sign_up_username=="" and not state.sign_up_password=="" and not state.sign_up_confirm_password=="" and not state.email=="" and state.sign_up_password==state.sign_up_confirm_password:
+            try:
+                doc=FirestoreDocument('Documents','Users')
+                users=doc.load()
+                emails=[users[user].get('email') for user in users]
+                if not state.sign_up_username in users and not state.email in emails:
+                    state.user=state.sign_up_username
+                    state.password=state.sign_up_password
+                    state.APIkey=None
+                    users[state.user]={
+                        'password':gen_lock(state.password,30),
+                        'email':state.email,
+                        'OpenAI_API_key':None
+                    }
+                    doc.dump(users)
+                else:
+                    stl.warning("This username / email adress is already taken.")
+                
+            except Exception as e:
+                stl.exception(e)
+                stl.warning("Something went wrong. Please try again.")    
+        else:
+            stl.warning("Non-empty username email and password required.")
+
+    with stl.form("sign_up",clear_on_submit=True):
+        stl.text_input("Username:",key='sign_up_username')
+        stl.text_input("E-mail:",key='email')
+        stl.text_input("Password:",type="password",key='sign_up_password')
+        stl.text_input("Confirm password:",type="password",key='sign_up_confirm_password')
+        stl.form_submit_button("Submit",on_click=on_submit_click)
+
+def make_sign_in():
+    def on_submit_click():
+        if not state.sign_in_username=="" and not state.sign_in_password=="":
+            try:
+                doc=FirestoreDocument('Documents','Users')
+                users=doc.load()
+                if state.sign_in_username in users:
+                    if check_lock(state.sign_in_password,users[state.sign_in_username]['password']):
+                        state.user=state.sign_in_username
+                        state.password=state.sign_in_password
+                        if users[state.user].get('OpenAI_API_key'):
+                            state.APIkey=decrypt(users[state.user]['OpenAI_API_key'],state.password)
+                        else:
+                            state.APIkey=None                       
+                    else:
+                        stl.warning("Wrong password.")
+                        time.sleep(0.5)
+                else:
+                    stl.warning("This username doesn't exist in the database.")
+
+            except Exception as e:
+                stl.exception(e)
+                stl.warning("Something went wrong. Please try again.")    
+        else:
+            stl.warning("Non-empty username and password required.")
+
+    with stl.form("login",clear_on_submit=True):
+        stl.text_input("Username:",key='sign_in_username')
+        stl.text_input("Password:",type="password",key='sign_in_password')
+        stl.form_submit_button("Submit",on_click=on_submit_click)
+
 #Makes the webapp login page        
 def make_login(): 
     stl.subheader("Streampy - Streamlit powered Python 3 interpreter")
-    stl.write("Please enter your credentials. If these are new, a new account will be created automaticly.")
-    con=stl.container()
-    with con:
-        def on_submit_click():
-            if not state.username=="" and not state.password=="":
-                try:
-                    doc=FirestoreDocument('Documents','Users')
-                    cloud=FirebaseStorage()
-                    users=doc.load()
-                    if state.username in users:
-                        if check_lock(state.password,users[state.username]['password']):
-                            state.user=state.username
-                            state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                            with stl.spinner("Please wait while your folder is being uploaded from the cloud..."):
-                                cloud.load_folder_from_cloud(state.user,state.user_folder)
-                            if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
-                                shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
-                        else:
-                            stl.warning("Wrong password.")
-                            time.sleep(0.5)
-                    else:
-                        users[state.username]={
-                            'password':gen_lock(state.password,30)
-                        }
-                        doc.dump(users)
-                        state.user=state.username
-                        if not os.path.exists(os.path.join(state.root,"UserFiles",state.user)):
-                            os.mkdir(os.path.join(state.root,"UserFiles",state.user))
-                        state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-                        if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
-                            shutil.copy(os.path.join(state.root,"startup.py"),os.path.join(state.user_folder,"startup.py"))
-                except Exception as e:
-                    stl.exception(e)
-                    stl.warning("Something went wrong. Please try again.")    
-            else:
-                stl.warning("Non-empty username and password required.")
-
-        with stl.form("login",clear_on_submit=True):
-            stl.text_input("Username:",key='username')
-            stl.text_input("Password:",type="password",key='password')
-            stl.form_submit_button("Submit",on_click=on_submit_click)
+    tab1,tab2=stl.tabs(["Sign-in","Sign-up"])
+    with tab1:
+        make_sign_in()
+    with tab2:
+        make_sign_up()
+    with stl.container():
         stl.subheader("Latest improvements:")
-        with open(os.path.join(_root_path_,"improvements.json")) as f:
+        with open(os.path.join(_root_,"improvements.json")) as f:
             improvements=json.load(f)
         for i in range(1,7):
             stl.info(improvements[-i]) 
+
+def make_OpenAI_API_request():
+    stl.write("To interact with Pandora (the AI assistant), you need to provide a valid OpenAI API key. This API key will be stored safely encrypted in the database, in such a way that you only can use it (not even me). If you don't provide any, Streampy will still work as a mere python console, but without the possibility to interact with the assistant.")
+    def on_submit():
+        state.APIkey=state.APIkey_input
+        doc=FirestoreDocument('Documents','Users')
+        users=doc.load()
+        users[state.user].update({'OpenAI_API_key':encrypt(state.APIkey,key=state.password)})
+        doc.dump(users)
         
+    with stl.form("OpenAI_API_Key",clear_on_submit=True):
+        stl.text_input("Please enter your OpenAI API key (leave blank if you don't want to):",type="password",key="APIkey_input")
+        stl.form_submit_button("Submit",on_click=on_submit)
+
+#Initialize the user's session
+def initialize_session():
+    #Initialize the user's session
+    with stl.spinner("Please wait while your session is being initialized..."):
+        if state.user_folder=="":
+            state.user_folder=root_join("UserFiles",state.user) 
+        cloud=FirebaseStorage()
+        cloud.load_folder_from_cloud(state.user,state.user_folder)
+        os.chdir(state.user_folder)
+        if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
+            shutil.copy(root_join("startup.py"),os.path.join(state.user_folder,"startup.py"))
+        if state.listener is None:
+            #start the front-end listener for sdtin redirection
+            state.listener=Listener(state.user,state.mode)
+            state.listener.start_listening()
+        if state.console is None:
+            names={
+                'st':st,
+                'clear':clear,
+                'restart':restart,
+                'edit':edit,
+                'close_editor':close_editor,
+                'exit':log_out,
+                'quit':log_out
+            }
+            state.console=Console(st,names=names,listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
+        if not state.APIkey=="" and state.pandora is None:
+            from Pandora_web import Pandora
+            class Utils:
+                pass
+            utils=Utils()
+            utils.edit=edit
+            utils.google_search=google_search
+            state.pandora=Pandora(state.console,utils)
+            state.console.send_in('pandora',state.pandora)
+    state.session_has_initialized=True
+    stl.experimental_rerun()
+
+def do_log_out():
+    with stl.spinner("Please wait while you're being logged-out of your session..."):
+        if state.mode=="web":
+            dump_to_cloud()
+            shutil.rmtree(state.user_folder)
+        state.open_file=None
+        state.file_content=None
+        state.show_editor=False
+        state.user=""
+        state.password=""
+        state.APIkey=None
+        state.user_folder=""
+        state.listener=None
+        state.console=None
+        state.deferrer.clear()
+        state.log_out=False
+        state.pandora=None
+        state.session_has_initialized=False
+        os.chdir(_root_)
+        time.sleep(2)
+    stl.experimental_rerun()
 
 #-----------------------------Main app session's logic-------------------------
 
@@ -417,28 +612,16 @@ if state.user=="":
     #Ask for credentials
     stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
     make_login()
+elif state.APIkey is None:
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
+    make_OpenAI_API_request()
+elif not state.session_has_initialized:
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
+    #Initialize the session
+    initialize_session()
+elif state.log_out:
+    do_log_out()
 else:
-    #Initialize the user's session
-    if state.user_folder=="":
-        state.user_folder=os.path.join(state.root,"UserFiles",state.user)
-        os.chdir(state.user_folder)
-    if state.listener is None:
-        #start the front-end listener for sdtin redirection
-        state.listener=Listener(state.user,state.mode)
-        state.listener.start_listening()
-    if state.console is None:
-        names={
-            'st':st,
-            'clear':clear,
-            'restart':restart,
-            'edit':edit,
-            'close_editor':close_editor,
-            'exit':log_out,
-            'quit':log_out
-        }
-        state.console=Console(st,names=names,listener=state.listener,startup=os.path.join(state.user_folder,"startup.py"))
-        os.chdir(state.user_folder)
-
     #Show the app's main page
     if state.show_editor==True:
         stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
@@ -452,22 +635,4 @@ else:
         stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
         make_menu()
         make_console()
-
-if state.log_out:
-    if state.mode=="web":
-        dump_to_cloud()
-        shutil.rmtree(state.user_folder)
-    state.open_file=None
-    state.file_content=None
-    state.show_editor=False
-    state.username=""
-    state.password=""
-    state.user=""
-    state.user_folder=""
-    state.listener=None
-    state.console=None
-    state.deferrer.clear()
-    state.log_out=False
-    os.chdir(_root_path_)
-    time.sleep(2)
-    stl.experimental_rerun()
+    

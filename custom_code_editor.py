@@ -21,10 +21,10 @@ class code_editor_output_parser:
 def input_cell(*args,**kwargs):
     buttons=[
         {
-            "name": "Run (Ctrl+Enter)",
+            "name": "Run",
             "feather": "Play",
             "primary": True,
-            "hasText": True,
+            "hasText": False,
             "alwaysOn":True,
             "showWithIcon": True,
             "commands": [
@@ -38,7 +38,6 @@ def input_cell(*args,**kwargs):
     ]
     kwargs.update({
         "theme":'default',
-        "lang":'python',
         "buttons":buttons
         })
 
@@ -228,4 +227,5 @@ def editor(*args,**kwargs):
 
     output=code_editor(*args,**kwargs)
     return st.session_state.editor_output_parser(output)
+
 

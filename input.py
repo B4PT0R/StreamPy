@@ -6,7 +6,9 @@ import socketio
 import eventlet
 from threading import Thread 
 from queue import Queue
-_root_path_=os.path.dirname(os.path.abspath(__file__))
+_root_=os.path.dirname(os.path.abspath(__file__))
+def root_join(*args):
+    return os.path.join(_root_,*args)
 
 #This module is for implementing stdin redirection
 
@@ -90,7 +92,7 @@ def readline(deferrer=None,listener=None):
         file='input_web.html'
     elif listener.mode=='local':
         file='input_local.html'
-    with open(os.path.join(_root_path_, file),'r') as f:
+    with open(root_join(file),'r') as f:
         html_code = f.read()
     #render the widget
     deferrer.html(html_code.replace('#SESSION_ID#',listener.session_id).replace('#KEY#',key), height=53)

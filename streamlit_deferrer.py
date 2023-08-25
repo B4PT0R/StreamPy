@@ -90,13 +90,20 @@ def ctx(context):
 def render(callable):
 # Renders deferred widgets by calling streamlit / third party components and captures outputs if any
     results=st_map(callable.name)(*callable.args,**callable.kwargs)
+    if 'key' in callable.kwargs:
+        key=callable.kwargs['key']
+    else:
+        key=None
+    
     if not results is None:
         if isiterable(results):
             for i,result in enumerate(results):
                 if i<len(callable.outputs):
-                    callable.outputs[i].value=result
+                    callable.outputs[i]._value=result
+                    callable.outputs[i].key=key
         else:
-            callable.outputs[0].value=results
+            callable.outputs[0]._value=results
+            callable.outputs[0].key=key
 
 class st_object:
 # Base class for deferred version of streamlit objects
@@ -204,7 +211,8 @@ class st_output(st_object):
     # Placeholder object for outputs of callables
     def __init__(self,deferrer,context):
         st_object.__init__(self,deferrer,context)
-        self.value=None
+        self._value=None
+        self.key=None
 
     def __getattr__(self,attr):
         if attr in ATTRIBUTES_MAPPING:
@@ -213,6 +221,13 @@ class st_output(st_object):
             return obj
         else:
             raise AttributeError
+
+    @property    
+    def value(self):
+        if not self.key is None:
+            return st.session_state[self.key]
+        else:
+            return self._value
 
 
 class st_property(st_renderable):

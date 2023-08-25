@@ -1,0 +1,29 @@
+{
+	"available_modules": [
+		"matplotlib",
+		"numpy",
+		"sympy",
+		"scipy",
+		"selenium",
+		"beautifulsoup4",
+		"requests",
+		"scikit-learn",
+		"pandas",
+		"graphviz",
+		"altair",
+		"plotly",
+		"bokeh",
+		"pydeck",
+		"scipy",
+		"sympy",
+		"scikit-learn",
+		"vega-datasets",
+		"requests",
+		"tiktoken",
+		"selenium",
+		"beautifulsoup4",
+		"PyPDF2",
+		"python-docx",
+		"odfpy"
+	]
+}

@@ -2,6 +2,7 @@ streamlit
 streamlit-extras
 streamlit-ace
 streamlit-code-editor
+audio-recorder-streamlit
 matplotlib
 numpy
 pandas
@@ -17,3 +18,11 @@ vega-datasets
 python-socketio
 eventlet
 firebase_admin
+openai
+requests
+tiktoken
+selenium
+beautifulsoup4
+PyPDF2
+python-docx
+odfpy
