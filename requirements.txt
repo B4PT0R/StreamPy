@@ -27,3 +27,4 @@ PyPDF2
 python-docx
 odfpy
 pydub
+SpeechRecognition
