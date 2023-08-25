@@ -15,7 +15,7 @@ from firebase_tools import firebase_app_is_initialized,firebase_init_app,Firesto
 if not firebase_app_is_initialized():
     firebase_init_app(stl.secrets["firebase_credentials"])
 from google_search_tools import get_google_search
-google_search=get_google_search(stl.secrets["google_custom_search"]["API_KEY"],stl.secrets["google_custom_search"]["CX"])
+google_search=get_google_search(dict(stl.secrets)["google_custom_search"]["API_KEY"],dict(stl.secrets)["google_custom_search"]["CX"])
 from streampy_console import Console
 from custom_code_editor import input_cell,editor,code_editor_output_parser
 from audio_recorder_streamlit import audio_recorder
