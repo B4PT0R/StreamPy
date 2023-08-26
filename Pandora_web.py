@@ -505,22 +505,17 @@ class Agent:
         self.completion_mode='chat'
         self.user="Baptiste"
         self.name="Pandora"
-        self.avatar=root_join('Pandora/Settings/pandora.jpeg')
+        self.avatar=root_join('Pandora','pandora.jpeg')
         self.ID=0
         self.utils=utils
         self.type='Pandora'
         self.description="Python IDE AI assistant"
         self.OS="Lubuntu"
-        self.workfolder=root_join("Pandora/WorkFolder/")
-        if not self.workfolder in sys.path:
-            sys.path.append(self.workfolder)
         self.console=console
         self.deferrer=console.deferrer
-        self.email_adress=os.environ.get("GMAIL_EMAIL")
-        self.email_password=os.environ.get("GMAIL_PASSWORD")
         self.mode=None
-        self.modes=Json(root_join('Pandora/Settings/modes.json'))
-        self.available_modules=Json(root_join('Pandora/Settings/av_modules.json'))
+        self.modes=Json(root_join('Pandora','modes.json'))
+        self.available_modules=Json(root_join('Pandora','av_modules.json'))
         self.user_prompt=''
         self.response_container=None
         self.preprompt=None
@@ -1044,10 +1039,13 @@ class Agent:
               
 class Pandora(Agent):
  
-    def __init__(self,console,utils):
-        Agent.__init__(self,console,utils)
+    def __init__(self,folder,console,utils):
+        Agent.__init__(self,folder,console,utils)
         self.load_mode('Pandora-GPT4-web')
-        self.memory=MemoryAgent(self.console,self.utils,self,root_join('Pandora/Settings/memory.json'))
+        self.memory=MemoryAgent(self.console,self.utils,self,os.path.join(folder,'Pandora','memory.json'))
+        self.workfolder=folder
+        if not self.workfolder in sys.path:
+            sys.path.append(self.workfolder)
  
     def update(self):
         pass

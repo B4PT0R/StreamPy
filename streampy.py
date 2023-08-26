@@ -262,7 +262,16 @@ def talk_to_pandora(audio_bytes):
     text=speech_to_text(audio_bytes)
     prompt_pandora(text)
 
-
+def prepare_user_folder():
+    if not os.path.exists(state.user_folder):
+        os.mkdir(state.user_folder)
+    if not os.path.exists(user_join('startup.py')):
+        shutil.copy(root_join("startup.py"),user_join("startup.py"))
+    if not os.path.exists(user_join('Pandora')):
+        os.mkdir(user_join('Pandora'))
+    if not os.path.exists(user_join('Pandora','memory.json')):
+        shutil.copy(root_join('Pandora','memory.json'),user_join('Pandora','memory.json'))
+    
 #---------------------------------App layout-------------------------------------
 
 #Sets the sidebar menu
@@ -291,7 +300,6 @@ def make_menu():
         def on_settings_click():
             state.page='settings'
         stl.button("Settings",on_click=on_settings_click,use_container_width=True)
-        
         
 #Sets the welcome message header and help expander
 def make_welcome():
@@ -555,6 +563,7 @@ def make_settings():
         stl.form_submit_button("Submit",on_click=on_submit)
 
 def make_OpenAI_API_request():
+    stl.subheader("OpenAI API key")
     stl.write("To interact with Pandora (the AI assistant), you need to provide a valid OpenAI API key. This API key will be stored safely encrypted in the database, in such a way that you only can use it (not even me). If you don't provide any, Streampy will still work as a mere python console, but without the possibility to interact with the assistant.")
     def on_submit():
         state.APIkey=state.APIkey_input
@@ -575,9 +584,8 @@ def initialize_session():
             state.user_folder=root_join("UserFiles",state.user) 
         cloud=FirebaseStorage()
         cloud.load_folder_from_cloud(state.user,state.user_folder)
+        prepare_user_folder()
         os.chdir(state.user_folder)
-        if not os.path.exists(os.path.join(state.user_folder,"startup.py")):
-            shutil.copy(root_join("startup.py"),os.path.join(state.user_folder,"startup.py"))
         if state.listener is None:
             #start the front-end listener for sdtin redirection
             state.listener=Listener(state.user,state.mode)
@@ -600,7 +608,7 @@ def initialize_session():
             utils=Utils()
             utils.edit=edit
             utils.google_search=google_search
-            state.pandora=Pandora(state.console,utils)
+            state.pandora=Pandora(state.user_folder,state.console,utils)
             state.pandora.user=state.user
             state.console.send_in('pandora',state.pandora)
     state.session_has_initialized=True
@@ -642,12 +650,14 @@ elif not state.session_has_initialized:
     #Initialize the session
     initialize_session()
 elif state.log_out:
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
     do_log_out()
 elif state.page=="settings":
+    stl.set_page_config(layout="centered",initial_sidebar_state="collapsed")
     make_settings()
 else:
     #Show the app's main page
-    if state.show_editor==True:
+    if state.show_editor:
         stl.set_page_config(layout="wide",initial_sidebar_state="collapsed")
         make_menu()
         console_column,editor_column=stl.columns(2)
