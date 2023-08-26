@@ -18,10 +18,9 @@ import odf
 import subprocess
 from contextlib import contextmanager
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.safari.options import Options as SafariOptions
-from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import shutil
  
@@ -313,43 +312,59 @@ def split_string(string, delimiters):
     if current_substring:
         substrings.append(current_substring)
     return substrings
- 
+
+import shutil
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.chrome.service import Service as ChromiumService
+from webdriver_manager.core.utils import ChromeType
+
+class browser_webdriver:
+
+    def __init__(self):
+        self.driver=None
+
+    def __call__(self):
+        if self.driver is None:
+            firefox_exists = shutil.which("firefox") is not None
+            chrome_exists = shutil.which("google-chrome") is not None
+            chromium_exists=shutil.which("chromium") is not None
+            
+            # Set the options and driver based on the available browser
+            if firefox_exists:
+                options = FirefoxOptions()
+                options.headless = True
+                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
+            elif chrome_exists:
+                options = ChromeOptions()
+                options.headless = True
+                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+            elif chromium_exists:
+                options = ChromeOptions()
+                options.headless = True
+                self.driver = webdriver.Chrome(service=ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()),options=options)
+            else:
+                raise Exception('No supported browser found.')
+        return self.driver
+    
+    def close(self):
+        if self.driver:
+            self.driver.quit()
+            self.driver = None
+
+web_driver = browser_webdriver()
+
 def extract_webpage_content(url):
-    # Check for the presence of Firefox, Chrome, Safari and Edge
-    firefox_exists = shutil.which("firefox") is not None
-    chrome_exists = shutil.which("google-chrome") is not None
-    safari_exists = shutil.which("safari") is not None
-    edge_exists = shutil.which("msedge") is not None
-
-    # Set the options and driver based on the available browser
-    if firefox_exists:
-        options = FirefoxOptions()
-        options.headless = True
-        driver = webdriver.Firefox(options=options)
-    elif chrome_exists:
-        options = ChromeOptions()
-        options.headless = True
-        driver = webdriver.Chrome(options=options)
-    elif safari_exists:
-        options = SafariOptions()
-        options.headless = True
-        driver = webdriver.Safari(options=options)
-    elif edge_exists:
-        options = EdgeOptions()
-        options.headless = True
-        driver = webdriver.Edge(options=options)
-    else:
-        raise Exception('No supported browser found.')
-
+    driver = web_driver()
     driver.get(url)
-
     page_source = driver.page_source
-
-    driver.quit()
-
     soup = BeautifulSoup(page_source, 'html.parser')
     text = soup.get_text()
-
     return strip_newlines(text)
  
 def get_text(source):
