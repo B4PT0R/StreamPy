@@ -321,8 +321,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.chrome.service import Service as ChromiumService
-from webdriver_manager.core.utils import ChromeType
+
 
 class browser_webdriver:
 
@@ -332,8 +331,7 @@ class browser_webdriver:
     def __call__(self):
         if self.driver is None:
             firefox_exists = shutil.which("firefox") is not None
-            chrome_exists = shutil.which("google-chrome") is not None
-            chromium_exists=shutil.which("chromium") is not None
+            chrome_exists = (shutil.which("chrome") is not None) or (shutil.which("google-chrome") is not None) or (shutil.which("chromium") is not None)
             
             # Set the options and driver based on the available browser
             if firefox_exists:
@@ -344,10 +342,6 @@ class browser_webdriver:
                 options = ChromeOptions()
                 options.headless = True
                 self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-            elif chromium_exists:
-                options = ChromeOptions()
-                options.headless = True
-                self.driver = webdriver.Chrome(service=ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()),options=options)
             else:
                 raise Exception('No supported browser found.')
         return self.driver
