@@ -15,7 +15,7 @@ from firebase_tools import firebase_app_is_initialized,firebase_init_app,Firesto
 if not firebase_app_is_initialized():
     firebase_init_app(stl.secrets["firebase_credentials"])
 from google_search_tools import get_google_search
-google_search=get_google_search(dict(stl.secrets["google_custom_search"])["API_KEY"],dict(stl.secrets["google_custom_search"])["CX"])
+google_search=get_google_search(stl.secrets["google_custom_search"]["API_KEY"],stl.secrets["google_custom_search"]["CX"])
 from streampy_console import Console
 from custom_code_editor import input_cell,editor,code_editor_output_parser
 from audio_recorder_streamlit import audio_recorder
@@ -27,120 +27,127 @@ import io
 from pydub import AudioSegment
 from speech_recognition import Recognizer, AudioData
 
+#------------------------shortcuts--------------------------
+
+state=stl.session_state
+
 def root_join(*args):
     return os.path.join(_root_,*args)
 
+def user_join(*args):
+    return os.path.join(state.user_folder,*args)
+
 #-------------Initialize session_state variables--------------
 
-#shortcut
-state=stl.session_state
+def initialize_state(state):
+    #detects wether the app runs localy or not.
+    if 'mode' not in state:
+        if True:#_root_.startswith('/mount') or _root_.startswith('/app'):
+            state.mode="web"
+        else:
+            state.mode="local"
 
-#root folder's path of the app 
-if 'root' not in state:
-    state.root=_root_
+    #Username
+    if 'user' not in state:
+        if state.mode=='web':
+            state.user=""
+        else:
+            state.user="DefaultUser"
 
-#detects wether the app runs localy or not.
-if 'mode' not in state:
-    if True:#state.root.startswith('/mount') or state.root.startswith('/app'):
-        state.mode="web"
-    else:
-        state.mode="local"
+    #Password
+    if 'password' not in state:
+        state.password=None
 
-#Username
-if 'user' not in state:
-    if state.mode=='web':
-        state.user=""
-    else:
-        state.user="DefaultUser"
+    if 'page' not in state:
+        state.page="login"
 
-#Password
-if 'password' not in state:
-    state.password=None
+    #A boolean indicating if the user's session has been initialized
+    if 'session_has_initialized' not in state:
+        state.session_has_initialized=False
 
-if 'session_has_initialized' not in state:
-    state.session_has_initialized=False
+    #A boolean indicating if the user has log-out
+    if 'log_out' not in state:
+        state.log_out=False
 
-#A boolean indicating if the user has log-out
-if 'log_out' not in state:
-    state.log_out=False
+    #User folder
+    if 'user_folder' not in state:
+        state.user_folder=""
 
-#User folder
-if 'user_folder' not in state:
-    state.user_folder=""
+    #Useful to generate unique keys for widgets
+    if 'key_manager' not in state:
+        state.key_manager=KeyManager()
 
-#Useful to generate unique keys for widgets
-if 'key_manager' not in state:
-    state.key_manager=KeyManager()
-km=state.key_manager
+    #Main streamlit commands deferrer for the console queue (allows using streamlit commands directly in the input cell)
+    if 'deferrer' not in state:
+        state.deferrer=st_deferrer(key_manager=state.key_manager)
 
-#Main streamlit commands deferrer for the console queue (allows using streamlit commands directly in the input cell)
-if 'deferrer' not in state:
-    state.deferrer=st_deferrer(key_manager=km)
+    #Listener used to redirect stdin to a custom input widget in direct communication with the python backend.
+    #Initialized when user logs-in
+    if not 'listener' in state:
+        state.listener=None
+
+    #the python console in which the code will be run. Initialized at user login.
+    if 'console' not in state:
+        state.console = None
+
+    #the AI assistant. Initialized at user login.
+    if 'pandora' not in state:
+        state.pandora=None
+
+    if not 'input_cell_output_parser' in state:
+        state.input_cell_output_parser=code_editor_output_parser()
+
+    if not 'editor_output_parser' in state:
+        state.editor_output_parser=code_editor_output_parser()
+
+    #the file currently open in the editor
+    if 'open_file' not in state:
+        state.open_file=None
+
+    #the content of the file currently open in the editor
+    if 'open_file' not in state:
+        state.file_content=None
+
+    #whether to show the editor or not
+    if 'show_editor' not in state:
+        state.show_editor=False
+
+    #The current key of the python input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
+    if 'input_key' not in state:
+        state.input_key = state.key_manager.gen_key()
+
+    #The current key of the pandaora input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
+    if 'pandora_input_key' not in state:
+        state.pandora_input_key = state.key_manager.gen_key()
+
+    #The code displayed in the input cell
+    if 'input_code' not in state:
+        state.input_code = ''
+
+    #The code outputted by the input cell
+    if 'output_code' not in state:
+        state.output_code = ''
+
+    #The current key of the editor ace widget
+    if 'editor_key' not in state:
+        state.editor_key = state.key_manager.gen_key()
+
+    #A variable allowing access to the console queue container from anywhere
+    if 'console_queue' not in state:
+        state.console_queue=None
+
+    #A variable allowing access to the editor's container from anywhere
+    if 'console_queue' not in state:
+        state.editor_container=None
+
+    #The current input history index
+    if 'index' not in state:
+        state.index = 0
+
+initialize_state(state)
 st=state.deferrer
+km=state.key_manager
 st.reset()
-
-#Listener used to redirect stdin to a custom input widget in direct communication with the python backend.
-#Initialized when user logs-in
-if not 'listener' in state:
-    state.listener=None
-
-#the python console in which the code will be run. Initialized at user login.
-if 'console' not in state:
-    state.console = None
-
-#the AI assistant. Initialized at user login.
-if 'pandora' not in state:
-    state.pandora=None
-
-if not 'input_cell_output_parser' in st.session_state:
-    st.session_state.input_cell_output_parser=code_editor_output_parser()
-
-if not 'editor_output_parser' in st.session_state:
-    st.session_state.editor_output_parser=code_editor_output_parser()
-
-#the file currently open in the editor
-if 'open_file' not in state:
-    state.open_file=None
-
-#the content of the file currently open in the editor
-if 'open_file' not in state:
-    state.file_content=None
-
-#whether to show the editor or not
-if 'show_editor' not in state:
-    state.show_editor=False
-
-#The current key of the python input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
-if 'input_key' not in state:
-    state.input_key = km.gen_key()
-
-#The current key of the pandaora input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
-if 'pandora_input_key' not in state:
-    state.pandora_input_key = km.gen_key()
-
-#The code displayed in the input cell
-if 'input_code' not in state:
-    state.input_code = ''
-
-#The code outputted by the input cell
-if 'output_code' not in state:
-    state.output_code = ''
-
-#The current key of the editor ace widget
-if 'editor_key' not in state:
-    state.editor_key = km.gen_key()
-
-#A variable allowing access to the console queue container from anywhere
-if 'console_queue' not in state:
-    state.console_queue=None
-
-#A variable allowing access to the editor's container from anywhere
-if 'console_queue' not in state:
-    state.editor_container=None
-
-#The current input history index
-if 'index' not in state:
-    state.index = 0
 
 #------------------------------Main functions-------------------------------------
 
@@ -156,10 +163,10 @@ def log_out():
     state.log_out=True
 
 #Save the content of the editor as... 
-def save_as(name):
-    with open(os.path.join(state.user_folder,name),'w') as f:
+def save_as(file):
+    with open(file,'w') as f:
         f.write(state.file_content)
-    state.open_file=name
+    state.open_file=file
 
 #Closes the editor
 def close_editor():
@@ -177,12 +184,12 @@ def edit(file='buffer',text=None,wait=False):
     state.show_editor=True
     state.open_file=file
     if not file=='buffer':
-        if not os.path.exists(os.path.join(state.user_folder,file)):
-            with open(os.path.join(state.user_folder,file),'w') as f:
-                pass
         if text is None:
-            with open(os.path.join(state.user_folder,file),'r') as f:
-                file_content=f.read()
+            if not os.path.exists(file):
+                file_content=""
+            else:
+                with open(file,'r') as f:
+                    file_content=f.read()
         else:
             file_content=text
     else:
@@ -220,6 +227,7 @@ def restart():
         utils.edit=edit
         utils.google_search=google_search
         state.pandora=Pandora(state.console,utils)
+        state.pandora.user=state.user
         state.console.send_in('pandora',state.pandora)
 
 #Clears the console's queue
@@ -280,6 +288,10 @@ def make_menu():
         def on_history_click():
             show_hide_history_cells()
         stl.button("Show/Hide history cells",on_click=on_history_click,use_container_width=True)
+        def on_settings_click():
+            state.page='settings'
+        stl.button("Settings",on_click=on_settings_click,use_container_width=True)
+        
         
 #Sets the welcome message header and help expander
 def make_welcome():
@@ -396,7 +408,7 @@ def make_editor():
         def on_file_name_change():
             if not state.file_name==' ':
                 state.editor_key=km.gen_key()
-                edit(state.file_name)
+                edit(user_join(state.file_name))
         def get_relative_paths(folder_path):
             """Get all relative paths of files in the given folder, recursively."""
             relative_paths = []
@@ -413,7 +425,7 @@ def make_editor():
             stl.selectbox('Select a file:',files,on_change=on_file_name_change,index=0,key='file_name')
     elif event=="delete":
         def on_yes():
-            os.remove(os.path.join(state.user_folder,state.open_file))
+            os.remove(state.open_file)
             state.editor_key=km.gen_key()
             edit()
             with empty:
@@ -431,22 +443,22 @@ def make_editor():
                 stl.success("File saved.")
         else:
             def on_file_name_change():
-                save_as(state.file_name)
+                save_as(user_join(state.file_name))
                 with empty:
                     stl.success("File saved.")
             with empty:
                 stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
     elif event=="save_as":
         def on_file_name_change():
-            save_as(state.file_name)
+            save_as(user_join(state.file_name))
             with empty:
                 stl.success("File saved.")
         with empty:
             stl.text_input("Enter name of file:",on_change=on_file_name_change,key='file_name')
     elif event=="rename":
         def on_file_name_change():
-            os.remove(os.path.join(state.user_folder,state.open_file))
-            save_as(state.file_name)
+            os.remove(state.open_file)
+            save_as(user_join(state.file_name))
             with empty:
                 stl.success("File renamed.")
         with empty:
@@ -533,6 +545,15 @@ def make_login():
         for i in range(1,7):
             stl.info(improvements[-i]) 
 
+def make_settings():
+    def on_submit():
+        state.page="default"
+        pass
+    with stl.form("settings"):
+        stl.subheader("Settings")
+        stl.write("This is an empty settings page!")
+        stl.form_submit_button("Submit",on_click=on_submit)
+
 def make_OpenAI_API_request():
     stl.write("To interact with Pandora (the AI assistant), you need to provide a valid OpenAI API key. This API key will be stored safely encrypted in the database, in such a way that you only can use it (not even me). If you don't provide any, Streampy will still work as a mere python console, but without the possibility to interact with the assistant.")
     def on_submit():
@@ -580,6 +601,7 @@ def initialize_session():
             utils.edit=edit
             utils.google_search=google_search
             state.pandora=Pandora(state.console,utils)
+            state.pandora.user=state.user
             state.console.send_in('pandora',state.pandora)
     state.session_has_initialized=True
     stl.experimental_rerun()
@@ -621,6 +643,8 @@ elif not state.session_has_initialized:
     initialize_session()
 elif state.log_out:
     do_log_out()
+elif state.page=="settings":
+    make_settings()
 else:
     #Show the app's main page
     if state.show_editor==True:
