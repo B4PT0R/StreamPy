@@ -1049,7 +1049,7 @@ class Agent:
 class Pandora(Agent):
  
     def __init__(self,folder,console,utils):
-        Agent.__init__(self,folder,console,utils)
+        Agent.__init__(self,console,utils)
         self.load_mode('Pandora-GPT4-web')
         self.memory=MemoryAgent(self.console,self.utils,self,os.path.join(folder,'Pandora','memory.json'))
         self.workfolder=folder
