@@ -22,6 +22,7 @@ openai
 requests
 tiktoken
 selenium
+webdriver-manager
 beautifulsoup4
 PyPDF2
 python-docx
