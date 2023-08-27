@@ -1,2 +1,2 @@
 texlive-latex-base
-chromium
+firefox-esr

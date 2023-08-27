@@ -309,11 +309,10 @@ def split_string(string, delimiters):
         substrings.append(current_substring)
     return substrings
 
-import shutil
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
 
 class browser_webdriver:
 
@@ -322,11 +321,13 @@ class browser_webdriver:
 
     def __call__(self):
         if self.driver is None:
-                options = ChromeOptions()
-                options.add_argument('--disable-gpu')
+            if self.driver is None:
+                # Install the latest version of GeckoDriver
+                options = FirefoxOptions()
                 options.add_argument('--headless')
-                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
         return self.driver
+
     
     def close(self):
         if self.driver:
