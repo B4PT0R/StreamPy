@@ -308,8 +308,7 @@ def split_string(string, delimiters):
         substrings.append(current_substring)
     return substrings
 
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
 
 class browser_webdriver:
 
@@ -318,11 +317,16 @@ class browser_webdriver:
 
     def __call__(self):
         if self.driver is None:
-            if self.driver is None:
-                # Install the latest version of GeckoDriver
-                options = FirefoxOptions()
-                options.headless = True
-                self.driver = webdriver.Firefox(options=options)
+            from selenium import webdriver
+            from selenium.webdriver.firefox.options import Options as FirefoxOptions
+            from get_gecko_driver import GetGeckoDriver
+            # Install the latest version of GeckoDriver
+            get_driver = GetGeckoDriver()
+            get_driver.install()
+            # Set the driver
+            options = FirefoxOptions()
+            options.headless = True
+            self.driver = webdriver.Firefox(options=options)
         return self.driver
 
     

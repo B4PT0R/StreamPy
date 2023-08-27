@@ -22,7 +22,7 @@ openai
 requests
 tiktoken
 seleniumbase
-webdriver-manager
+get-gecko-driver
 beautifulsoup4
 PyPDF2
 python-docx

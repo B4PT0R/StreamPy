@@ -1,3 +1,2 @@
 texlive-latex-base
 firefox-esr
-firefox-geckodriver
