@@ -18,7 +18,6 @@ import odf
 import subprocess
 from contextlib import contextmanager
 from bs4 import BeautifulSoup
-import shutil
  
 #Tools
 
@@ -311,8 +310,6 @@ def split_string(string, delimiters):
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
 
 class browser_webdriver:
 
@@ -324,8 +321,8 @@ class browser_webdriver:
             if self.driver is None:
                 # Install the latest version of GeckoDriver
                 options = FirefoxOptions()
-                options.add_argument('--headless')
-                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
+                options.headless = True
+                self.driver = webdriver.Firefox(options=options)
         return self.driver
 
     
