@@ -21,7 +21,7 @@ firebase_admin
 openai
 requests
 tiktoken
-selenium
+seleniumbase
 webdriver-manager
 beautifulsoup4
 PyPDF2

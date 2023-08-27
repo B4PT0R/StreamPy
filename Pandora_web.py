@@ -311,12 +311,9 @@ def split_string(string, delimiters):
 
 import shutil
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
 
 class browser_webdriver:
 
@@ -325,20 +322,10 @@ class browser_webdriver:
 
     def __call__(self):
         if self.driver is None:
-            firefox_exists = shutil.which("firefox") is not None
-            chrome_exists = (shutil.which("chrome") is not None) or (shutil.which("google-chrome") is not None) or (shutil.which("chromium") is not None)
-            
-            # Set the options and driver based on the available browser
-            if firefox_exists:
-                options = FirefoxOptions()
-                options.headless = True
-                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-            elif chrome_exists:
                 options = ChromeOptions()
-                options.headless = True
+                options.add_argument('--disable-gpu')
+                options.add_argument('--headless')
                 self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-            else:
-                raise Exception('No supported browser found.')
         return self.driver
     
     def close(self):
