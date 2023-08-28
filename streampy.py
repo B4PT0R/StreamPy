@@ -116,6 +116,9 @@ def initialize_state(state):
     if 'input_key' not in state:
         state.input_key = state.key_manager.gen_key()
 
+    if 'recoder_key' not in state:
+        state.recorder_key=state.key_manager.gen_key()
+
     #The current key of the pandaora input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
     if 'pandora_input_key' not in state:
         state.pandora_input_key = state.key_manager.gen_key()
@@ -226,7 +229,7 @@ def restart():
         utils=Utils()
         utils.edit=edit
         utils.google_search=google_search
-        state.pandora=Pandora(state.console,utils)
+        state.pandora=Pandora(state.user_folder,state.console,utils)
         state.pandora.user=state.user
         state.console.send_in('pandora',state.pandora)
 
@@ -355,8 +358,10 @@ def make_pandora_input():
             recording_color="#67b5f9",
             neutral_color="#292A33",
             icon_name="microphone",
-            icon_size="3x"
+            icon_size="3x",
+            key=state.recorder_key
         )
+    stl.write(audio_bytes is None)
     a,b,c=stl.columns(3)
     with a:
         prev=stl.button("Previous",use_container_width=True)
@@ -367,8 +372,9 @@ def make_pandora_input():
     if keep_going:
         prompt_pandora("Keep going!")
     if audio_bytes:
-        stl.audio(audio_bytes)
-        talk_to_pandora(audio_bytes)
+            stl.write("Triggered!")
+            state.recorder_key=km.gen_key()
+            #talk_to_pandora(audio_bytes)
     if event=='submit':
         prompt_pandora(prompt)
         state.pandora_input_key=km.gen_key()
