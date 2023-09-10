@@ -49,7 +49,6 @@ def strint(i,n=3):
     return s
  
 def islistoflists(l):
- 
     return isinstance(l,list) and all([isinstance(e,list) for e in l])
  
 def correct_code(code):
@@ -78,7 +77,7 @@ def correct_code(code):
         try:
             codeop.compile_command('\n'.join(lines[:i+1]),symbol='exec')
         except SyntaxError:
-            lines[i]='##'+lines[i]
+            lines[i]='#'+lines[i]
         else:
             i+=1
         if i==len(lines):
@@ -87,14 +86,13 @@ def correct_code(code):
             
     lines=code.split('\n')
     for i in range(len(lines)):
-        if lines[i].startswith('##'):
-            lines[i]=f'st.write("{lines[i][2:]}")'
+        if lines[i].startswith('#'):
+            lines[i]=f'pandora.speak("{lines[i][2:]}")'
     code='\n'.join(lines)
     
     return code
  
 def isiterable(a):
- 
     try:
         iter(a)
     except:
@@ -128,7 +126,6 @@ def treeview(startpath):
     return s
  
 class Json:
- 
 
     def __init__(self,json_file=None):
  
@@ -307,8 +304,6 @@ def split_string(string, delimiters):
     if current_substring:
         substrings.append(current_substring)
     return substrings
-
-
 
 class browser_webdriver:
 
@@ -491,6 +486,37 @@ def TexToPDF(tex_file, pdf_file):
     else: 
         raise Exception("Arguments must be .tex and .pdf files paths")
 
+def remove_special_chars(text):
+    specials=[
+  "#",
+  "$",
+  "*",
+  '"',
+  "_",
+  "`",
+  "[",
+  "]",
+  "(",
+  ")",
+  "{",
+  "}",
+  "|",
+  "-",
+  "+",
+  "!",
+  "~",
+  "^",
+  ":",
+  ";",
+  "<",
+  ">",
+  "=",
+  "/"
+]
+    for special in specials:
+        text=text.replace(special," ")
+    return text
+
 class Agent:
  
     def __init__(self,console=None,utils=None):
@@ -559,7 +585,7 @@ class Agent:
         self.settings=None
 
     def new_message(self,content,role,name):
- 
+        
         if content=="":
             return []
         else:
@@ -879,8 +905,6 @@ class Agent:
         if prompt=="":
             pass
         else:
-            with self.deferrer.chat_message(name='user'):
-                self.deferrer.write(prompt)
             self(prompt)
     
     def run(self,code):
@@ -1151,7 +1175,15 @@ class Pandora(Agent):
         response='\n'.join(lines)
         self.save(['_docstrings_'],response)
         self.fetch([['_docstrings_']])
-        return response       
+        return response
+
+    def speak(self,text,lang=None):
+        st.write(text)
+        if self.speech_mode:
+            if lang is None:
+                lang=self.lang
+            st.speak(remove_special_chars(text),language=lang)
+
  
     def assemble(self,sources,overlap=0):
  

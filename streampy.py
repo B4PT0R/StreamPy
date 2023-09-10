@@ -18,14 +18,13 @@ from google_search_tools import get_google_search
 google_search=get_google_search(stl.secrets["google_custom_search"]["API_KEY"],stl.secrets["google_custom_search"]["CX"])
 from streampy_console import Console
 from custom_code_editor import input_cell,editor,code_editor_output_parser
-from audio_recorder_streamlit import audio_recorder
+from streamlit_mic_recorder import speech_to_text
+from streamlit_TTS import text_to_speech 
 from streamlit_deferrer import st_deferrer,KeyManager
 import shutil
 import time
 import json
 import io
-from pydub import AudioSegment
-from speech_recognition import Recognizer, AudioData
 
 #------------------------shortcuts--------------------------
 
@@ -116,12 +115,15 @@ def initialize_state(state):
     if 'input_key' not in state:
         state.input_key = state.key_manager.gen_key()
 
-    if 'recoder_key' not in state:
+    if 'recorder_key' not in state:
         state.recorder_key=state.key_manager.gen_key()
 
     #The current key of the pandaora input cell (changing the key allows to reset the input cell to empty, otherwise the last text typed remains)
     if 'pandora_input_key' not in state:
         state.pandora_input_key = state.key_manager.gen_key()
+
+    if 'prompt' not in state:
+        state.prompt=None
 
     #The code displayed in the input cell
     if 'input_code' not in state:
@@ -245,24 +247,18 @@ def run(code):
                 state.console.run(code)
 
 def prompt_pandora(prompt):
-    code=f"""
+    with state.console_queue:
+        with st.chat_message(name='user'):
+            st.write(prompt)
+        code=f"""
 pandora.prompt(\"\"\"
 {prompt}
 \"\"\")
 """
-    with state.console_queue:
         state.console.run(code)
 
-def speech_to_text(audio_bytes):
-    rec = Recognizer()
-    try:
-        audio_data = AudioData(AudioSegment.from_wav(io.BytesIO(audio_bytes)).set_channels(1).raw_data,44100,2)
-        return rec.recognize_google(audio_data, language='fr')
-    except:
-        return ""
-
-def talk_to_pandora(audio_bytes):
-    text=speech_to_text(audio_bytes)
+def talk_to_pandora(audio):
+    text=speech_to_text(audio)
     prompt_pandora(text)
 
 def prepare_user_folder():
@@ -349,32 +345,22 @@ def make_python_input():
 
 #Sets the pandora input cell part 
 def make_pandora_input():
-    c1,c2=stl.columns([92,8])
-    with c1:
-        event,prompt=input_cell('',key=state.pandora_input_key,lang='text',focus=True)
-    with c2:
-        audio_bytes = audio_recorder(
-            text="",
-            recording_color="#67b5f9",
-            neutral_color="#292A33",
-            icon_name="microphone",
-            icon_size="3x",
-            key=state.recorder_key
-        )
-    stl.write(audio_bytes is None)
-    a,b,c=stl.columns(3)
+    event,prompt=input_cell('',key=state.pandora_input_key,lang='text',focus=True)
+    a,b,c,d=stl.columns(4)
     with a:
         prev=stl.button("Previous",use_container_width=True)
     with b:
         keep_going=stl.button("Keep going!",use_container_width=True)
     with c:
+        text = speech_to_text("Talk to Pandora","Stop recording",language='fr',just_once=True,use_container_width=True)
+    with d:
         next=stl.button("Next",use_container_width=True)
     if keep_going:
         prompt_pandora("Keep going!")
-    if audio_bytes:
-            stl.write("Triggered!")
-            state.recorder_key=km.gen_key()
-            #talk_to_pandora(audio_bytes)
+        stl.experimental_rerun()
+    if text:
+        prompt_pandora(text)
+        stl.experimental_rerun()
     if event=='submit':
         prompt_pandora(prompt)
         state.pandora_input_key=km.gen_key()

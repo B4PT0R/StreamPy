@@ -1,6 +1,5 @@
 
 {
-    "ace":{"module":"streamlit_ace","component":"st_ace","type":"st_callable"},
     "add_vertical_space":{"module":"streamlit_extras.add_vertical_space","component":"add_vertical_space","type":"st_callable"},
     "annotated_text":{"module":"annotated_text","component":"annotated_text","type":"st_callable"},
     "annotation":{"module":"annotated_text","component":"annotation","type":"st_direct_callable"},
@@ -22,5 +21,6 @@
     "stylable_container":{"module":"streamlit_extras.stylable_container","component":"stylable_container","type":"st_callable"},
     "switch_page":{"module":"streamlit_extras.switch_page_button","component":"switch_page","type":"st_callable"},
     "toggle_switch":{"module":"streamlit_toggle","component":"st_toggle_switch","type":"st_callable"},
-    "vertical_slider":{"module":"streamlit_vertical_slider","component":"vertical_slider","type":"st_callable"}
+    "vertical_slider":{"module":"streamlit_vertical_slider","component":"vertical_slider","type":"st_callable"},
+    "speak":{"module":"streamlit_TTS","component":"text_to_speech","type":"st_direct_callable"}
 }

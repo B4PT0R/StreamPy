@@ -1,8 +1,8 @@
 streamlit
 streamlit-extras
-streamlit-ace
 streamlit-code-editor
-audio-recorder-streamlit
+streamlit-mic-recorder
+streamlit-TTS
 matplotlib
 numpy
 pandas
@@ -27,5 +27,3 @@ beautifulsoup4
 PyPDF2
 python-docx
 odfpy
-pydub
-SpeechRecognition
