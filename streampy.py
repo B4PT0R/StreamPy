@@ -531,7 +531,7 @@ def make_sign_in():
         stl.form_submit_button("Submit",on_click=on_submit_click)
 
 #Makes the webapp login page        
-def make_login(): 
+def make_login():
     stl.subheader("Streampy - Streamlit powered Python 3 interpreter")
     tab1,tab2=stl.tabs(["Sign-in","Sign-up"])
     with tab1:

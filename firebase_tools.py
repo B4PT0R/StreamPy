@@ -70,7 +70,7 @@ class FirebaseStorage:
         for foldername, subfolders, filenames in os.walk(local_folder):
             for filename in filenames:
                 local_file_path = os.path.join(foldername, filename)
-                relative_path = os.path.relpath(local_file_path, local_folder)
+                relative_path = local_file_path[len(local_folder):].lstrip(os.path.sep).replace(os.path.sep, "/")            
                 cloud_file_path = os.path.join(cloud_target_folder, relative_path).replace("\\", "/")
 
                 blob = self.bucket.blob(cloud_file_path)
@@ -89,7 +89,7 @@ class FirebaseStorage:
         
         for blob in blobs:
             # Determine the local path for the blob
-            relative_blob_path = os.path.relpath(blob.name, cloud_folder)
+            relative_blob_path = blob.name[len(cloud_folder):].lstrip('/')
             local_file_path = os.path.join(target_local_folder, relative_blob_path)
             
             # Ensure the directory exists (for nested folders)
